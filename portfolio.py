@@ -7,9 +7,8 @@ import dateutil
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook  # Per creare un libro
-from openpyxl import load_workbook  # Per caricare un libro
 from openpyxl.chart import (AreaChart, BarChart, LineChart, PieChart,
-                            Reference, Series)
+                            Reference)
 from openpyxl.chart.label import DataLabel, DataLabelList
 from openpyxl.chart.layout import Layout, ManualLayout
 from openpyxl.chart.legend import LegendEntry
@@ -72,9 +71,10 @@ class Report():
         self.cellw = lambda x: cm_to_EMU((x * (18.65-1.71))/10)
         self.mesi_dict = {1: 'Gennaio', 2: 'Febbraio', 3: 'Marzo', 4: 'Aprile', 5: 'Maggio', 6: 'Giugno', 7: 'Luglio', 8: 'Agosto', 9: 'Settembre', 10: 'Ottobre', 11: 'Novembre', 12: 'Dicembre'}
         # Pipeline with Python and Postrge
-        DATABASE_URL = 'postgres+psycopg2://postgres:bloomberg893@localhost:5432/artes'
-        self.engine = create_engine(DATABASE_URL)
-        self.connection = self.engine.connect()
+        # DATABASE_URL = 'postgres+psycopg2://postgres:bloomberg893@localhost:5432/artes'
+        # self.engine = create_engine(DATABASE_URL)
+        # self.connection = self.engine.connect()
+
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
         controvalore_t1 = portfolio['TOTALE t1'].sum()
@@ -455,16 +455,22 @@ class Report():
         self.logo(ws6)
 
     def andamento_7(self):
-        # TODO: dichiara prima i valori delle 3 performance fatte dal ptfe e dal benchmark (target come costante), poi
-        # dichiara le costanti per scalare i grafici
-        '''
+        """
         Crea la settima pagina.
         Formattazione e grafici.
-        '''
+        """
         # Carica performance benchmark
-        perf_bk = pd.read_excel(self.file_portafoglio, sheet_name='Benchmark', index_col=0, header=0)
+        benchmark = pd.read_excel(self.file_portafoglio, sheet_name='Benchmark', index_col=0, header=0)
+        perf_bk_2007 = (float(benchmark.loc[self.t1, 'benchmark_2007']) - 100) / 100
+        perf_bk_ytd = (float(benchmark.loc[self.t1, 'benchmark_2007']) - float(benchmark.loc[self.t0_ytd, 'benchmark_2007'])) / float(benchmark.loc[self.t0_ytd, 'benchmark_2007'])
+        perf_month = (float(benchmark.loc[self.t1, 'benchmark_2007']) - float(benchmark.loc[self.t0_1m, 'benchmark_2007'])) / float(benchmark.loc[self.t0_1m, 'benchmark_2007'])
         # Carica portafoglio
-        portafoglio = pd.read_excel(self.file_portafoglio, sheet_name='Portafoglio', index_col=0, header=0)
+        ptf = pd.read_excel(self.file_portafoglio, sheet_name='Portafoglio', index_col=0, header=0)
+        # print(ptf['31/10/2015':'31/12/2021'])
+        perf_ptf_2007 = (float(ptf.loc[self.t1, 'ptf_2007']) - 100) / 100
+        perf_ptf_ytd = (float(ptf.loc[self.t1, 'ptf_2007']) - ptf.loc[self.t0_ytd, 'ptf_2007']) / ptf.loc[self.t0_ytd, 'ptf_2007']
+        perf_ptf_month = (float(ptf.loc[self.t1, 'ptf_2007']) - ptf.loc[self.t0_1m, 'ptf_2007']) / ptf.loc[self.t0_1m, 'ptf_2007']
+
 
         ws7 = self.wb.create_sheet('7.andamento')
         ws7 = self.wb['7.andamento']
@@ -480,27 +486,14 @@ class Report():
         # Aggiunta primo grafico
         chart = BarChart()
         chart.type = 'col'
-        chart.title = "TOTALE DA INIZIO 2007"
-        ws7['A13'] = 'P. in Strumenti'
-        ws7['A14'] = (float(portafoglio.loc[self.t1, 'P. in Strumenti']) - 100) / 100
-        # controvalore_t1 = portfolio['TOTALE t1'].sum()
-        # print(controvalore_t1)
-        # cred_art_artes = portfolio.loc[(portfolio['INTERMEDIARIO']=='Credito Artigiano Artes') & (portfolio['CATEGORIA']=='CASH'), 'TOTALE t1'].sum()
-        # print(cred_art_artes)
-        # cred_art_bn = portfolio.loc[(portfolio['INTERMEDIARIO']=='Credito Artigiano B.N.') & (portfolio['CATEGORIA']=='CASH'), 'TOTALE t1'].sum()
-        # print(cred_art_bn)
-        # mediolanum = portfolio.loc[(portfolio['INTERMEDIARIO']=='Mediolanum') & (portfolio['CATEGORIA']=='CASH'), 'TOTALE t1'].sum()
-        # print(mediolanum)
-        # ubi_ita = portfolio.loc[(portfolio['INTERMEDIARIO']=='Ubi Ita') & ((portfolio['PRODOTTO']=='RAGANELLA') | (portfolio['PRODOTTO']=='ANTHARES SPA')), 'TOTALE t1'].sum()
-        # print(ubi_ita)
-        # ws7['A14'] = portfolio.loc[:, 'TOTALE t1'].sum() - portfolio.loc[(portfolio['INTERMEDIARIO']=='Credito Artigiano Artes') & (portfolio['CATEGORIA']=='CASH' & portfolio['CATEGORIA']=='CASH_FOREIGN_CURR'), 'TOTALE t1'].sum() - portfolio.loc[(portfolio['INTERMEDIARIO']=='Credito Artigiano B.N.') & (portfolio['CATEGORIA']=='CASH' & portfolio['CATEGORIA']=='CASH_FOREIGN_CURR'), 'TOTALE t1'].sum() - portfolio.loc[(portfolio['INTERMEDIARIO']=='Mediolanum') & (portfolio['CATEGORIA']=='CASH' & portfolio['CATEGORIA']=='CASH_FOREIGN_CURR'), 'TOTALE t1'].sum() - portfolio.loc[(portfolio['INTERMEDIARIO']=='Ubi Ita') & (portfolio['PRODOTTO']=='RAGANELLA' & portfolio['PRODOTTO']=='ANTHARES SPA'), 'TOTALE t1'].sum()
+        chart.title = "DA INIZIO MANDATO"
+        chart.y_axis.scaling.min = min(perf_bk_2007, perf_ptf_2007, 0) - 0.04
+        chart.y_axis.scaling.max = max(perf_bk_2007, perf_ptf_2007) + 0.04
+        ws7['A13'] = 'Ptf'
+        ws7['A14'] = perf_ptf_2007
         ws7['A14'].number_format = FORMAT_PERCENTAGE_00
-        ws7['B13'] = 'P. in benchmark'
-        ws7['B14'] = (float(perf_bk.loc[self.t1, 'M_pf_bk']) - 100) / 100
-        VALORE_MINIMO_ASSE_Y = -0.05
-        VALORE_MASSIMO_ASSE_Y = (float(perf_bk.loc[self.t1, 'M_pf_bk']) - 100) / 100 + 0.1
-        chart.y_axis.scaling.min = VALORE_MINIMO_ASSE_Y
-        chart.y_axis.scaling.max = VALORE_MASSIMO_ASSE_Y
+        ws7['B13'] = 'Benchmark'
+        ws7['B14'] = perf_bk_2007
         ws7['B14'].number_format = FORMAT_PERCENTAGE_00
         data = Reference(ws7, min_col=1, max_col=2, min_row=13, max_row=14)
         chart.add_data(data, titles_from_data=True)
@@ -520,14 +513,14 @@ class Report():
         # Aggiunta secondo grafico
         chart = BarChart()
         chart.type = 'col'
-        chart.title = "TOTALE YEAR TO DATE"
-        chart.y_axis.scaling.min = VALORE_MINIMO_ASSE_Y
-        chart.y_axis.scaling.max = VALORE_MASSIMO_ASSE_Y
-        ws7['F13'] = 'P. in Strumenti'
-        ws7['F14'] = (float(portafoglio.loc[self.t1, 'P. in Strumenti']) - portafoglio.loc[self.t0_ytd, 'P. in Strumenti']) / portafoglio.loc[self.t0_ytd, 'P. in Strumenti']
+        chart.title = "YEAR TO DATE"
+        chart.y_axis.scaling.min = min(perf_bk_ytd, perf_ptf_ytd, 0) - 0.03
+        chart.y_axis.scaling.max = max(perf_bk_ytd, perf_ptf_ytd, 0.04) + 0.03
+        ws7['F13'] = 'Ptf'
+        ws7['F14'] = perf_ptf_ytd
         ws7['F14'].number_format = FORMAT_PERCENTAGE_00
-        ws7['G13'] = 'P. in benchmark'
-        ws7['G14'] = (float(perf_bk.loc[self.t1, 'M_pf_bk']) - float(perf_bk.loc[self.t0_ytd, 'M_pf_bk'])) / float(perf_bk.loc[self.t0_ytd, 'M_pf_bk'])
+        ws7['G13'] = 'Benchmark'
+        ws7['G14'] = perf_bk_ytd
         ws7['G14'].number_format = FORMAT_PERCENTAGE_00
         ws7['H13'] = 'Target'
         ws7['H14'] = 0.04
@@ -554,14 +547,14 @@ class Report():
         # Aggiunta terzo grafico
         chart = BarChart()
         chart.type = 'col'
-        chart.title = "TOTALE MESE"
-        chart.y_axis.scaling.min = VALORE_MINIMO_ASSE_Y
-        chart.y_axis.scaling.max = VALORE_MASSIMO_ASSE_Y
-        ws7['J13'] = 'P. in Strumenti'
-        ws7['J14'] = (float(portafoglio.loc[self.t1, 'P. in Strumenti']) - portafoglio.loc[self.t0_1m, 'P. in Strumenti']) / portafoglio.loc[self.t0_1m, 'P. in Strumenti']
+        chart.title = "MENSILE"
+        chart.y_axis.scaling.min = -0.03
+        chart.y_axis.scaling.max = 0.03
+        ws7['J13'] = 'Ptf'
+        ws7['J14'] = perf_ptf_month
         ws7['J14'].number_format = FORMAT_PERCENTAGE_00
-        ws7['K13'] = 'P. in benchmark'
-        ws7['K14'] = (float(perf_bk.loc[self.t1, 'M_pf_bk']) - float(perf_bk.loc[self.t0_1m, 'M_pf_bk'])) / float(perf_bk.loc[self.t0_1m, 'M_pf_bk'])
+        ws7['K13'] = 'Benchmark'
+        ws7['K14'] = perf_month
         ws7['K14'].number_format = FORMAT_PERCENTAGE_00
         data = Reference(ws7, min_col=10, max_col=11, min_row=13, max_row=14)
         chart.add_data(data, titles_from_data=True)
@@ -588,11 +581,11 @@ class Report():
         self.logo(ws7)
 
     def cono_8(self):
-        '''
+        """
         Crea l'ottava pagina.
         Formattazione e grafici.
         Aggiunta fogli Cono, Portafoglio e Benchmark.
-        '''
+        """
         # Carica dati per i coni
         coni = pd.read_excel(self.file_portafoglio, sheet_name='Cono', index_col=0, header=0)
         coni.index = pd.to_datetime(coni.index, format='%Y-%m-%d %H:%M:%S').strftime('%m-%Y')
@@ -607,7 +600,7 @@ class Report():
         # Carica rendimento portafoglio
         perf_pf = pd.read_excel(self.file_portafoglio, sheet_name='Portafoglio', index_col=0, header=0)
         perf_pf.index = pd.to_datetime(perf_pf.index, format='%Y-%m-%d %H:%M:%S').strftime('%m-%Y')
-        # Carica perf pf
+        # Carica perf ptf
         ws_dati_pf = self.wb.create_sheet('Dati_pf')
         ws_dati_pf = self.wb['Dati_pf']
         self.wb.active = ws_dati_pf
