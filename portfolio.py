@@ -106,6 +106,46 @@ class Report():
         active_ws.add_image(logo)
         logo.anchor = ancoraggio
 
+    def text_box(self, ws, min_row, max_row, min_col, max_col, fill_type='solid', fill_color='FFFFFF', font_name='Times New Roman',
+        font_size=12, font_color='31869B', border_style='medium', border_color='31869B'):
+        """
+        Simula una text-box
+        
+        Parameters:
+            ws {class 'openpyxl.worksheet.worksheet.Worksheet'} = foglio excel in cui creare la text box
+            min_row, max_row, min_col, max_col {int} = coordinate dove inserire la text box
+            fill_type {str} = tipo di riempimento, 'solid' di default.
+            fill_color {hex color} = colore del riempimento della text box, 'FFFFFF' di default.
+            font_name {str} = nome del font da usare per il testo scritto nella text box, 'Times New Roman' di default
+            font_size {int} = dimensione dei caratteri del testo scritto nella text box, 12 di default.
+            font_color {hex color} = colore del testo scritto nella text box, '31869B' di default.
+            border_style {str} = stile del bordo da applicare alla text box, 'medium' di default.
+            border_color {hex color} = colore da applicare al bordo della text box, '31869B' di default.
+        """
+        
+        for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
+            for _ in range(max_col-min_col+1):
+                ws[row[_].coordinate].fill = PatternFill(fill_type=fill_type, fgColor=fill_color)
+                ws[row[_].coordinate].font = Font(name=font_name, size=font_size, color=font_color)
+            ws[row[0].coordinate].border = Border(left=Side(border_style=border_style, color=border_color))
+            ws[row[max_col-min_col].coordinate].border = Border(right=Side(border_style=border_style, color=border_color))
+            if row[0].row == min_row:
+                for _ in range(max_col-min_col+1):
+                    if row[_].column == min_col:
+                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color), left=Side(border_style=border_style, color=border_color))
+                    elif row[_].column == max_col:
+                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color), right=Side(border_style=border_style, color=border_color))
+                    else:
+                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color))
+            elif row[0].row == max_row:
+                for _ in range(max_col-min_col+1):
+                    if row[_].column == min_col:
+                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color), left=Side(border_style=border_style, color=border_color))
+                    elif row[_].column == max_col:
+                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color), right=Side(border_style=border_style, color=border_color))
+                    else:
+                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color))
+
     def copertina_1(self):
         '''
         Crea la prima pagina. 
@@ -179,11 +219,11 @@ class Report():
         self.logo(ws3)
 
     def analisi_rendimenti_4(self):
-        '''
+        """
         Crea la quarta pagina.
         Formattazione e una tabella.
         Aggiunge fogli Indici e fogli Indici_in_euro.
-        '''
+        """
         # Carica indici e tassi di cambio
         indici_tassi = pd.read_excel(self.file_portafoglio, sheet_name='Indici', header=[0, 1], parse_dates=True, index_col=0)
         indici_tassi.columns = indici_tassi.columns.droplevel(-1)
@@ -244,7 +284,7 @@ class Report():
         for row in ws4.iter_rows(min_row=8, max_row=40, min_col=1, max_col=9):
             ws4[row[0].coordinate].value = index_4[0]
             del index_4[0]
-            ws4.row_dimensions[row[0].row].height = 13    
+            ws4.row_dimensions[row[0].row].height = 13
             if ws4[row[0].coordinate].value == 'AZIONARI' or ws4[row[0].coordinate].value == 'HEDGE FUND' or ws4[row[0].coordinate].value == 'COMMODITIES'	or ws4[row[0].coordinate].value == 'OBBLIGAZIONARI GOVERNATIVE' or ws4[row[0].coordinate].value == 'OBBLIGAZIONARI CORPORATE' or ws4[row[0].coordinate].value == 'VALUTE' or ws4[row[0].coordinate].value == 'le valute sono espresse come quantità di euro per un\'unità di valuta estera':
                 ws4[row[0].coordinate].font = Font(name='Times New Roman', size=8, bold=True, color='006666')
                 ws4[row[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='92CDDC')
@@ -325,9 +365,8 @@ class Report():
                     ws4[row[8].coordinate].border = Border(bottom=Side(border_style='thin', color='000000'), right=Side(border_style='thin', color='000000'))
                     ws4.merge_cells(start_row=row[5].row, end_row=row[5].row, start_column=row[5].column, end_column=row[6].column)
         # 'Text-box'
-        ws4['J6'].border = Border(top=Side(border_style='medium', color='31869B'), bottom=Side(border_style='medium', color='31869B'), right=Side(border_style='medium', color='31869B'), left=Side(border_style='medium', color='31869B'))
-        ws4['J6'].fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
-        ws4.merge_cells('J6:O40')
+        self.text_box(ws4, 6, 40, 10, 15)
+
         # Logo
         self.logo(ws4, col=6, colOff=0.8, row=43, rowOff=-0.2)
 
@@ -630,6 +669,12 @@ class Report():
         ws8['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
         ws8.merge_cells('A1:L4')
 
+        # Corpo
+        ws8['E6'] = 'Benchmark 2007'
+        ws8['E6'].alignment = Alignment(horizontal='center', vertical='center')
+        ws8['E6'].font = Font(name='Times New Roman', size=14, bold=True, color='31869B')
+        ws8.merge_cells('E6:H6')
+
         # Aggiunta grafico
         chart = LineChart()
         # Riga corrispondente al mese di t1 nei tre nuovi fogli
@@ -706,11 +751,11 @@ class Report():
         self.logo(ws8)
 
     def cono_9(self):
-        '''
+        """
         Crea la nona pagina.
         Formattazione e grafici.
         Riattiva fogli ws_dati_bk, ws_dati_cono e ws_dati_pf.
-        '''
+        """
         # Riattiva scenari coni
         ws_dati_cono = self.wb['Dati_cono']
         # Riattiva performance ptf
@@ -730,7 +775,7 @@ class Report():
         ws9.merge_cells('A1:L4')
 
         # Corpo
-        ws9['E6'] = 'Nuovo Benchmark 2016'
+        ws9['E6'] = 'Benchmark 2016'
         ws9['E6'].alignment = Alignment(horizontal='center', vertical='center')
         ws9['E6'].font = Font(name='Times New Roman', size=14, bold=True, color='31869B')
         ws9.merge_cells('E6:H6')
@@ -807,11 +852,117 @@ class Report():
         # Logo
         self.logo(ws9)
 
+    def cono_10(self):
+        """
+        Crea la decima pagina.
+        Formattazione e grafici.
+        Riattiva fogli ws_dati_bk, ws_dati_cono e ws_dati_pf.
+        In partenza 31/01/2022 si vedevano solo due dati, e mi è stato chiesto di sviluppare il cono dei tre casi probabilistici
+        più a lungo, proiettandoli nel futuro. Definisco una costante chiamata SFASAMENTO_DATI che aggiunge n periodi alle serie
+        storiche di quei tre casi. Nel futuro questa variabile è da togliere.
+        """
+        SFASAMENTO_DATI = 13
+        # Riattiva scenari coni
+        ws_dati_cono = self.wb['Dati_cono']
+        # Riattiva performance ptf
+        ws_dati_pf = self.wb['Dati_pf']
+        # Riattiva performance bk
+        ws_dati_bk = self.wb['Dati_bk']
+
+        ws9_2 = self.wb.create_sheet('9.cono_3')
+        ws9_2 = self.wb['9.cono_3']
+        self.wb.active = ws9_2
+
+        # Titolo
+        ws9_2['A1'] = 'Cono Delle Probabilità'
+        ws9_2['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws9_2['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
+        ws9_2['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
+        ws9_2.merge_cells('A1:L4')
+
+        # Corpo
+        ws9_2['E6'] = 'Benchmark 2022'
+        ws9_2['E6'].alignment = Alignment(horizontal='center', vertical='center')
+        ws9_2['E6'].font = Font(name='Times New Roman', size=14, bold=True, color='31869B')
+        ws9_2.merge_cells('E6:H6')
+
+        # Aggiunta grafico
+        chart = LineChart()
+        riga_mese_t1 = lambda x : next(x[row[0].coordinate].row for row in x.iter_rows(min_col=0, max_col=0) if x[row[0].coordinate].value == self.t1.strftime('%m-%Y'))
+        ws_dati_cono_max_row = riga_mese_t1(ws_dati_cono)
+        # for row in ws_dati_cono.iter_rows(min_col=0, max_col=0):
+        #     if ws_dati_cono[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        #         print(f"La riga del mese t1 è : {ws_dati_cono[row[0].coordinate].row}.")
+        #         ws_dati_cono_max_row = ws_dati_cono[row[0].coordinate].row
+        data = Reference(ws_dati_cono, min_col=11, max_col=13, min_row=180, max_row=ws_dati_cono_max_row+SFASAMENTO_DATI) # hard coding
+        chart.add_data(data, titles_from_data='False')
+        # for row in ws_dati_bk.iter_rows(min_col=0, max_col=0):
+        #     if ws_dati_bk[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        #         print(f"La riga del mese t1 è : {ws_dati_bk[row[0].coordinate].row}.")
+        #         ws_dati_bk_max_row = ws_dati_bk[row[0].coordinate].row
+        ws_dati_bk_max_row = riga_mese_t1(ws_dati_bk)
+        data = Reference(ws_dati_bk, min_col=27, min_row=182, max_row=ws_dati_bk_max_row) # hard coding
+        chart.add_data(data, titles_from_data='False')
+        # for row in ws_dati_pf.iter_rows(min_col=0, max_col=0):
+        #     if ws_dati_pf[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        #         print(f"La riga del mese t1 è : {ws_dati_pf[row[0].coordinate].row}.")
+        #         ws_dati_pf_max_row = ws_dati_pf[row[0].coordinate].row
+        ws_dati_pf_max_row = riga_mese_t1(ws_dati_pf)
+        data = Reference(ws_dati_pf, min_col=6, min_row=180, max_row=ws_dati_pf_max_row) # hard coding
+        chart.add_data(data, titles_from_data='False')
+
+        s0 = chart.series[0]
+        s0.graphicalProperties.line.solidFill = '0000FF'
+        s0.graphicalProperties.line.width = 12700
+        s0.dLbls = DataLabelList()
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        s0.dLbls.dLbl.append(dl)
+        s1 = chart.series[1]
+        s1.graphicalProperties.line.solidFill = 'FF00FF'
+        s1.graphicalProperties.line.width = 12700
+        s1.dLbls = DataLabelList()
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        s1.dLbls.dLbl.append(dl)
+        s2 = chart.series[2]
+        s2.graphicalProperties.line.solidFill = '000080'
+        s2.graphicalProperties.line.width = 12700
+        s2.dLbls = DataLabelList()
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        s2.dLbls.dLbl.append(dl)
+        s3 = chart.series[3]
+        s3.graphicalProperties.line.solidFill = '177245'
+        s3.graphicalProperties.line.width = 25400
+        s3.dLbls = DataLabelList()
+        dl = DataLabel(dLblPos='b', idx=ws_dati_bk_max_row-183, numFmt='0.00', showVal=True)
+        s3.dLbls.dLbl.append(dl)
+        s4 = chart.series[4]
+        s4.graphicalProperties.line.solidFill = 'FF0000'
+        s4.graphicalProperties.line.width = 25400
+        s4.dLbls = DataLabelList()
+        dl = DataLabel(dLblPos='t', idx=ws_dati_pf_max_row-181, numFmt='0.00', showVal=True)
+        s4.dLbls.dLbl.append(dl)
+
+        dates = Reference(ws_dati_cono, min_col=1, max_col=1, min_row=181, max_row=ws_dati_cono_max_row+SFASAMENTO_DATI)
+        chart.set_categories(dates)
+        chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
+        size = XDRPositiveSize2D(pixels_to_EMU(812.598), pixels_to_EMU(453.54))
+        cellw = lambda x: cm_to_EMU((x * (18.65-1.71))/10)
+        coloffset2 = cellw(0.1)
+        maker = AnchorMarker(col=0, colOff=coloffset2, row=6, rowOff=0)
+        ancoraggio = OneCellAnchor(_from=maker, ext=size)
+        ws9_2.add_chart(chart)
+        chart.anchor = ancoraggio
+        chart.y_axis.scaling.min = 95 # valore minimo asse y
+        ws9_2.row_dimensions[5].height = 11.25
+
+        # Logo
+        self.logo(ws9_2)
+
     def nuovo_bk_10(self):
-        '''
+        """
         Crea la decima pagina.
         Solo formattazione.
-        '''
+        """
         ws10 = self.wb.create_sheet('10.nuovo_bk')
         ws10 = self.wb['10.nuovo_bk']
         self.wb.active = ws10
@@ -822,9 +973,10 @@ class Report():
         ws10['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
         ws10.merge_cells('A1:L4')
         # Corpo
-        body_10_1 = ['Indice MTS BOT (Lordo)', 'JPM EMU Aggregate Tutte le Scadenze', 'ML UME Corpo. & Large Cap', 'JPM EMU Aggregate 1-3 anni', 'JPM titoli di stato USA',
-            'JPM titoli di stato globali', 'MSCI Europa', 'MSCI Nord America', 'MSCI Pacifico', 'HFRX Absolute Return', 'MSCI Emerging Market Free']
-        body_10_2 = ['36,38%', '3,97%', '9,70%', '7,00%', '3,05%', '3,60%', '8,17%', '7,32%', '1,55%', '16,86%', '2,41%']
+        body_10_1 = ['Indice MTS BOT', 'Bloomberg Euro Government', 'Bloomberg Euro Corporate Index', 'Bloomberg Pan-European High Yield Index',
+            'Bloomberg Global Aggregate Index', 'MSCI Europa', 'MSCI USA', 'MSCI Pacifico', 'MSCI Emerging Market Free', 
+            'HFRX Absolute Return', 'Bloomberg Commodity Index']
+        body_10_2 = ['20,00%', '13,15%', '4,66%', '8,05%', '10,09%', '7,27%', '14,55%', '4,56%', '11,04%', '2,85%', '3,78%']
         for row in ws10.iter_rows(min_row=8, max_row=8+len(body_10_1)-1, min_col=4, max_col=9):
             ws10[row[0].coordinate].value = body_10_1[0]
             del body_10_1[0]
@@ -836,23 +988,22 @@ class Report():
             ws10[row[5].coordinate].font = Font(name='Calibri', size=11, bold=True, italic=True, color='000000') 
             ws10[row[5].coordinate].alignment = Alignment(horizontal='right')
             ws10[row[5].coordinate].border = Border(bottom=Side(border_style='mediumDashDot', color='31869B'))
-        ws10['C21'] = '           Benchmark costruito seguendo la composizione del portafoglio al 31/01/2016'
+        ws10['C21'] = '           Benchmark costruito seguendo la composizione del portafoglio al 31/12/2021'
         ws10['C21'].font = Font(name='Calibri', size=11, bold=True, italic=True, color='31869B') 
         # Logo
         self.logo(ws10)
 
     def performance_11(self):
-        '''
+        """
         Crea l'undicesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
         # Carica performance posizioni --- dipende da portfolio
         # rend_pf = pd.read_excel(self.file_portafoglio, sheet_name='Rendimento', index_col=0, header=0)
         delta = pd.read_excel(self.file_portafoglio, sheet_name='Delta', index_col=0, header=0)
         # print(delta)
-
         ws11 = self.wb.create_sheet('11.perf_mese')
         ws11 = self.wb['11.perf_mese']
         self.wb.active = ws11
@@ -980,9 +1131,7 @@ class Report():
             #             ws11[row[4].coordinate].value = ws11[row[4].coordinate].value + ws11[row[4].coordinate].offset(row=-__).value
 
         # 'Text box'
-        ws11['H6'].border = Border(top=Side(border_style='medium', color='31869B'), bottom=Side(border_style='medium', color='31869B'), right=Side(border_style='medium', color='31869B'), left=Side(border_style='medium', color='31869B'))
-        ws11['H6'].fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
-        ws11.merge_cells(start_row=6, end_row=7+len_int-1, start_column=8, end_column=12)
+        self.text_box(ws11, 6, 18, 8, 12)
 
         # Logo
         self.logo(ws11, colOff=0, row=26)
@@ -1312,10 +1461,9 @@ class Report():
         self.logo(ws14)
 
     def att_in_corso_15(self):
-        '''
+        """
         Crea la quindicesima pagina
-        Solo formattazione.
-        '''
+        """
         ws15 = self.wb.create_sheet('15.att')
         ws15 = self.wb['15.att']
         self.wb.active = ws15
@@ -1326,17 +1474,15 @@ class Report():
         ws15['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
         ws15.merge_cells('A1:L4')
 
-        ws15['A6'].border = Border(top=Side(border_style='medium', color='31869B'), bottom=Side(border_style='medium', color='31869B'), right=Side(border_style='medium', color='31869B'), left=Side(border_style='medium', color='31869B'))
-        ws15['A6'].fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
-        ws15.merge_cells('A6:L28')
+        # Text box
+        self.text_box(ws15, 6, 28, 1, 12)
 
         self.logo(ws15)
 
     def valutazione_per_macroclasse_16(self):
-        '''
+        """
         Crea la sedicesima pagina.
-        Solo formattazione
-        '''
+        """
         ws16 = self.wb.create_sheet('16.val_per_macro')
         ws16 = self.wb['16.val_per_macro']
         self.wb.active = ws16
@@ -2729,6 +2875,7 @@ class Report():
 
 if __name__ == "__main__":
     start = time.time()
+    # TODO : riduci la costante SFASAMENTO_DATI (riga 825 di un'unità)
     _ = Report(t1='31/01/2022')
     _.copertina_1()
     _.indice_2()
@@ -2739,6 +2886,7 @@ if __name__ == "__main__":
     _.andamento_7()
     _.cono_8()
     _.cono_9()
+    _.cono_10()
     _.nuovo_bk_10()
     _.performance_11()
     _.prezzi_12()
