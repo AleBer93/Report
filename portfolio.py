@@ -7,8 +7,7 @@ import dateutil
 import numpy as np
 import pandas as pd
 from openpyxl import Workbook  # Per creare un libro
-from openpyxl.chart import (AreaChart, BarChart, LineChart, PieChart,
-                            Reference)
+from openpyxl.chart import AreaChart, BarChart, LineChart, PieChart, Reference
 from openpyxl.chart.label import DataLabel, DataLabelList
 from openpyxl.chart.layout import Layout, ManualLayout
 from openpyxl.chart.legend import LegendEntry
@@ -619,7 +618,7 @@ class Report():
         # Logo
         self.logo(ws7)
 
-    def cono_8(self):
+    def caricamento_dati(self):
         """
         Crea l'ottava pagina.
         Formattazione e grafici.
@@ -659,98 +658,98 @@ class Report():
         ws_dati_bk.delete_rows(2)
         ws_dati_bk.sheet_state = 'hidden'
 
-        # Titolo
-        ws8 = self.wb.create_sheet('8.cono_1')
-        ws8 = self.wb['8.cono_1']
-        self.wb.active = ws8
-        ws8['A1'] = 'Cono Delle Probabilità'
-        ws8['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws8['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws8['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws8.merge_cells('A1:L4')
+        # # Titolo
+        # ws8 = self.wb.create_sheet('8.cono_1')
+        # ws8 = self.wb['8.cono_1']
+        # self.wb.active = ws8
+        # ws8['A1'] = 'Cono Delle Probabilità'
+        # ws8['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        # ws8['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
+        # ws8['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
+        # ws8.merge_cells('A1:L4')
 
-        # Corpo
-        ws8['E6'] = 'Benchmark 2007'
-        ws8['E6'].alignment = Alignment(horizontal='center', vertical='center')
-        ws8['E6'].font = Font(name='Times New Roman', size=14, bold=True, color='31869B')
-        ws8.merge_cells('E6:H6')
+        # # Corpo
+        # ws8['E6'] = 'Benchmark 2007'
+        # ws8['E6'].alignment = Alignment(horizontal='center', vertical='center')
+        # ws8['E6'].font = Font(name='Times New Roman', size=14, bold=True, color='31869B')
+        # ws8.merge_cells('E6:H6')
 
-        # Aggiunta grafico
-        chart = LineChart()
-        # Riga corrispondente al mese di t1 nei tre nuovi fogli
-        riga_mese_t1 = lambda x : next(x[row[0].coordinate].row for row in x.iter_rows(min_col=0, max_col=0) if x[row[0].coordinate].value == self.t1.strftime('%m-%Y'))
-        ws_dati_cono_max_row = riga_mese_t1(ws_dati_cono)
-        # print(ws_dati_cono_max_row)
-        # for row in ws_dati_cono.iter_rows(min_col=0, max_col=0):
-        #     if ws_dati_cono[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
-        #         # print(f"La riga del mese t1 è : {ws_dati_cono[row[0].coordinate].row}.")
-        #         ws_dati_cono_max_row = ws_dati_cono[row[0].coordinate].row
-        data = Reference(ws_dati_cono, min_col=3, max_col=5, min_row=1, max_row=ws_dati_cono_max_row)
-        chart.add_data(data, titles_from_data='False')
-        ws_dati_bk_max_row = riga_mese_t1(ws_dati_bk)
-        # print(ws_dati_bk_max_row)
-        # for row in ws_dati_bk.iter_rows(min_col=0, max_col=0):
-        #     if ws_dati_bk[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
-        #         print(f"La riga del mese t1 è : {ws_dati_bk[row[0].coordinate].row}.")
-        #         ws_dati_bk_max_row = ws_dati_bk[row[0].coordinate].row
-        data = Reference(ws_dati_bk, min_col=25, min_row=3, max_row=ws_dati_bk_max_row)
-        chart.add_data(data, titles_from_data='False')
-        ws_dati_pf_max_row = riga_mese_t1(ws_dati_pf)
-        # print(ws_dati_pf_max_row)
-        # for row in ws_dati_pf.iter_rows(min_col=0, max_col=0):
-        #     if ws_dati_pf[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
-        #         print(f"La riga del mese t1 è : {ws_dati_pf[row[0].coordinate].row}.")
-        #         ws_dati_pf_max_row = ws_dati_pf[row[0].coordinate].row
-        data = Reference(ws_dati_pf, min_col=4, min_row=1, max_row=ws_dati_pf_max_row)
-        chart.add_data(data, titles_from_data='False')
+        # # Aggiunta grafico
+        # chart = LineChart()
+        # # Riga corrispondente al mese di t1 nei tre nuovi fogli
+        # riga_mese_t1 = lambda x : next(x[row[0].coordinate].row for row in x.iter_rows(min_col=0, max_col=0) if x[row[0].coordinate].value == self.t1.strftime('%m-%Y'))
+        # ws_dati_cono_max_row = riga_mese_t1(ws_dati_cono)
+        # # print(ws_dati_cono_max_row)
+        # # for row in ws_dati_cono.iter_rows(min_col=0, max_col=0):
+        # #     if ws_dati_cono[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        # #         # print(f"La riga del mese t1 è : {ws_dati_cono[row[0].coordinate].row}.")
+        # #         ws_dati_cono_max_row = ws_dati_cono[row[0].coordinate].row
+        # data = Reference(ws_dati_cono, min_col=3, max_col=5, min_row=1, max_row=ws_dati_cono_max_row)
+        # chart.add_data(data, titles_from_data='False')
+        # ws_dati_bk_max_row = riga_mese_t1(ws_dati_bk)
+        # # print(ws_dati_bk_max_row)
+        # # for row in ws_dati_bk.iter_rows(min_col=0, max_col=0):
+        # #     if ws_dati_bk[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        # #         print(f"La riga del mese t1 è : {ws_dati_bk[row[0].coordinate].row}.")
+        # #         ws_dati_bk_max_row = ws_dati_bk[row[0].coordinate].row
+        # data = Reference(ws_dati_bk, min_col=25, min_row=3, max_row=ws_dati_bk_max_row)
+        # chart.add_data(data, titles_from_data='False')
+        # ws_dati_pf_max_row = riga_mese_t1(ws_dati_pf)
+        # # print(ws_dati_pf_max_row)
+        # # for row in ws_dati_pf.iter_rows(min_col=0, max_col=0):
+        # #     if ws_dati_pf[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
+        # #         print(f"La riga del mese t1 è : {ws_dati_pf[row[0].coordinate].row}.")
+        # #         ws_dati_pf_max_row = ws_dati_pf[row[0].coordinate].row
+        # data = Reference(ws_dati_pf, min_col=4, min_row=1, max_row=ws_dati_pf_max_row)
+        # chart.add_data(data, titles_from_data='False')
 
-        s0 = chart.series[0]
-        s0.graphicalProperties.line.solidFill = '0000FF'
-        s0.graphicalProperties.line.width = 12700
-        s0.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
-        s0.dLbls.dLbl.append(dl)
-        s1 = chart.series[1]
-        s1.graphicalProperties.line.solidFill = 'FF00FF'
-        s1.graphicalProperties.line.width = 12700
-        s1.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
-        s1.dLbls.dLbl.append(dl)
-        s2 = chart.series[2]
-        s2.graphicalProperties.line.solidFill = '000080'
-        s2.graphicalProperties.line.width = 12700
-        s2.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
-        s2.dLbls.dLbl.append(dl)
-        s3 = chart.series[3]
-        s3.graphicalProperties.line.solidFill = '177245'
-        s3.graphicalProperties.line.width = 25400
-        s3.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='b', idx=ws_dati_bk_max_row-4, numFmt='0.00', showVal=True)
-        s3.dLbls.dLbl.append(dl)
-        s4 = chart.series[4]
-        s4.graphicalProperties.line.solidFill = 'FF0000'
-        s4.graphicalProperties.line.width = 25400
-        s4.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='b', idx=ws_dati_pf_max_row-2, numFmt='0.00', showVal=True)
-        s4.dLbls.dLbl.append(dl)
+        # s0 = chart.series[0]
+        # s0.graphicalProperties.line.solidFill = '0000FF'
+        # s0.graphicalProperties.line.width = 12700
+        # s0.dLbls = DataLabelList()
+        # dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
+        # s0.dLbls.dLbl.append(dl)
+        # s1 = chart.series[1]
+        # s1.graphicalProperties.line.solidFill = 'FF00FF'
+        # s1.graphicalProperties.line.width = 12700
+        # s1.dLbls = DataLabelList()
+        # dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
+        # s1.dLbls.dLbl.append(dl)
+        # s2 = chart.series[2]
+        # s2.graphicalProperties.line.solidFill = '000080'
+        # s2.graphicalProperties.line.width = 12700
+        # s2.dLbls = DataLabelList()
+        # dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-2, numFmt='0.00', showVal=True)
+        # s2.dLbls.dLbl.append(dl)
+        # s3 = chart.series[3]
+        # s3.graphicalProperties.line.solidFill = '177245'
+        # s3.graphicalProperties.line.width = 25400
+        # s3.dLbls = DataLabelList()
+        # dl = DataLabel(dLblPos='b', idx=ws_dati_bk_max_row-4, numFmt='0.00', showVal=True)
+        # s3.dLbls.dLbl.append(dl)
+        # s4 = chart.series[4]
+        # s4.graphicalProperties.line.solidFill = 'FF0000'
+        # s4.graphicalProperties.line.width = 25400
+        # s4.dLbls = DataLabelList()
+        # dl = DataLabel(dLblPos='b', idx=ws_dati_pf_max_row-2, numFmt='0.00', showVal=True)
+        # s4.dLbls.dLbl.append(dl)
 
-        dates = Reference(ws_dati_cono, min_col=1, max_col=1, min_row=2, max_row=ws_dati_cono_max_row)
-        chart.set_categories(dates)
-        chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
-        size = XDRPositiveSize2D(pixels_to_EMU(812.598), pixels_to_EMU(453.54))
-        cellw = lambda x: cm_to_EMU((x * (18.65-1.71))/10)
-        coloffset2 = cellw(0.1)
-        maker = AnchorMarker(col=0, colOff=coloffset2, row=6, rowOff=0)
-        ancoraggio = OneCellAnchor(_from=maker, ext=size)
-        ws8.add_chart(chart)
-        chart.anchor = ancoraggio
-        chart.y_axis.scaling.min = 80 # valore minimo asse y
+        # dates = Reference(ws_dati_cono, min_col=1, max_col=1, min_row=2, max_row=ws_dati_cono_max_row)
+        # chart.set_categories(dates)
+        # chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
+        # size = XDRPositiveSize2D(pixels_to_EMU(812.598), pixels_to_EMU(453.54))
+        # cellw = lambda x: cm_to_EMU((x * (18.65-1.71))/10)
+        # coloffset2 = cellw(0.1)
+        # maker = AnchorMarker(col=0, colOff=coloffset2, row=6, rowOff=0)
+        # ancoraggio = OneCellAnchor(_from=maker, ext=size)
+        # ws8.add_chart(chart)
+        # chart.anchor = ancoraggio
+        # chart.y_axis.scaling.min = 80 # valore minimo asse y
         
-        # Logo
-        self.logo(ws8)
+        # # Logo
+        # self.logo(ws8)
 
-    def cono_9(self):
+    def cono_8(self):
         """
         Crea la nona pagina.
         Formattazione e grafici.
@@ -763,8 +762,8 @@ class Report():
         # Riattiva performance bk
         ws_dati_bk = self.wb['Dati_bk']
 
-        ws9 = self.wb.create_sheet('9.cono_2')
-        ws9 = self.wb['9.cono_2']
+        ws9 = self.wb.create_sheet('8.cono_1')
+        ws9 = self.wb['8.cono_1']
         self.wb.active = ws9
 
         # Titolo
@@ -852,7 +851,7 @@ class Report():
         # Logo
         self.logo(ws9)
 
-    def cono_10(self):
+    def cono_9(self):
         """
         Crea la decima pagina.
         Formattazione e grafici.
@@ -861,7 +860,7 @@ class Report():
         più a lungo, proiettandoli nel futuro. Definisco una costante chiamata SFASAMENTO_DATI che aggiunge n periodi alle serie
         storiche di quei tre casi. Nel futuro questa variabile è da togliere.
         """
-        SFASAMENTO_DATI = 13
+        SFASAMENTO_DATI = 12
         # Riattiva scenari coni
         ws_dati_cono = self.wb['Dati_cono']
         # Riattiva performance ptf
@@ -869,8 +868,8 @@ class Report():
         # Riattiva performance bk
         ws_dati_bk = self.wb['Dati_bk']
 
-        ws9_2 = self.wb.create_sheet('9.cono_3')
-        ws9_2 = self.wb['9.cono_3']
+        ws9_2 = self.wb.create_sheet('9.cono_2')
+        ws9_2 = self.wb['9.cono_2']
         self.wb.active = ws9_2
 
         # Titolo
@@ -2794,7 +2793,6 @@ class Report():
                 ws27[row[_].coordinate].number_format = '#,0'
 
         chart = PieChart()
-
         labels = Reference(ws27, min_col=min_col, max_col=min_col, min_row=10, max_row=10+len_tipo_strumento_nogp-1)
         data = Reference(ws27, min_col=min_col + len_header_27 - 2, max_col=min_col + len_header_27 - 2, min_row=10, max_row=10+len_tipo_strumento_nogp-1)
         chart.add_data(data, titles_from_data=False)
@@ -2875,8 +2873,8 @@ class Report():
 
 if __name__ == "__main__":
     start = time.time()
-    # TODO : riduci la costante SFASAMENTO_DATI (riga 825 di un'unità)
-    _ = Report(t1='31/01/2022')
+    # TODO : riduci la costante SFASAMENTO_DATI (riga 863 di un'unità)
+    _ = Report(t1='28/02/2022')
     _.copertina_1()
     _.indice_2()
     _.analisi_di_mercato_3()
@@ -2884,9 +2882,9 @@ if __name__ == "__main__":
     _.analisi_indici_5()
     _.performance_6()
     _.andamento_7()
+    _.caricamento_dati()
     _.cono_8()
     _.cono_9()
-    _.cono_10()
     _.nuovo_bk_10()
     _.performance_11()
     _.prezzi_12()
