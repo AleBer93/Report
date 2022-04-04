@@ -38,7 +38,7 @@ class Report():
     # TODO:generalizza lo script per fare report mensili / bimensili / trimestrali...
 
     def __init__(self, t1, file_portafoglio='artes.xlsx'):
-        '''
+        """
         Initialize the class.
 
         Parameters:
@@ -50,7 +50,7 @@ class Report():
         cellh(float) = formula per lo spostamento in verticale
         cellw(float) = formula per lo spostamento in orizzontale
         mesi_dict(dict) = dizionario che associa ogni numero ordinale del mese con il suo nome
-        '''
+        """
         self.wb = Workbook()
         self.t1 = datetime.datetime.strptime(t1, '%d/%m/%Y')
         print(f"Data report : {self.t1}.")
@@ -83,7 +83,7 @@ class Report():
         print(f"Il controvalore del portafoglio nel mese precedente era : {controvalore_t0_1m}.")
 
     def logo(self, active_ws, col=5, colOff=0.3, row=34, rowOff=0, picture=''):
-        '''
+        """
         Aggiunge al foglio attivo l'immagine picture alla colonna col e alla riga row.
         Applica uno spostamento di colOff colonne e rowOff righe.
 
@@ -94,7 +94,7 @@ class Report():
         row(int) = riga di partenza in cui incollare l'immagine
         rowOff(float) = spostamento dalla riga di partenza
         picture(str) = percorso assoluto in cui si trova l'immagine
-        '''
+        """
         if not picture:
             picture = self.image
         logo = Image(picture)
@@ -146,10 +146,10 @@ class Report():
                         ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color))
 
     def copertina_1(self):
-        '''
+        """
         Crea la prima pagina. 
         Solo formattazione.
-        '''
+        """
         ws = self.wb.active
         ws.title = '1.copertina'
         #self.wb.active = ws
@@ -177,10 +177,10 @@ class Report():
         logo.width = 128.88188976377952755905511811024
 
     def indice_2(self):
-        '''
+        """
         Crea la seconda pagina.
         Solo formattazione.
-        '''
+        """
         ws2 = self.wb.create_sheet('2.indice')
         ws2 = self.wb['2.indice']
         self.wb.active = ws2
@@ -201,10 +201,10 @@ class Report():
         self.logo(ws2, row=32)
     
     def analisi_di_mercato_3(self):
-        '''
+        """
         Crea la terza pagina.
         Solo formattazione.
-        '''
+        """
         # 3.Analisi mercato
         ws3 = self.wb.create_sheet('3.an_mkt')
         ws3 = self.wb['3.an_mkt']
@@ -370,11 +370,11 @@ class Report():
         self.logo(ws4, col=6, colOff=0.8, row=43, rowOff=-0.2)
 
     def analisi_indici_5(self):
-        '''
+        """
         Crea la quinta pagina.
         Formattazione e grafici.
         Aggiunge fogli Indici_giornalieri.
-        '''
+        """
         # Carica indici giornalieri
         indici_giornalieri = pd.read_excel(self.file_portafoglio, sheet_name='Indici_giornalieri', names=['Date', 'S&P 500', 'Date.1', 'USDEUR', 'Date.2', 'VIX', 'Date.3', 'EURO STOXX 50'])
         indici_giornalieri['Date'] = pd.to_datetime(indici_giornalieri['Date'], format = '%Y-%m-%d %H:%M:%S').dt.strftime('%m-%Y')
@@ -474,10 +474,10 @@ class Report():
         self.logo(ws5)
 
     def performance_6(self):
-        '''
+        """
         Crea la sesta pagina.
         Solo formattazione.
-        '''
+        """
         # 6.Performance
         ws6 = self.wb.create_sheet('6.perf')
         ws6 =  self.wb['6.perf']
@@ -1136,10 +1136,10 @@ class Report():
         self.logo(ws11, colOff=0, row=26)
 
     def prezzi_12(self):
-        '''
+        """
         Crea la dodicesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
         # 12.Prezzi 1
@@ -1207,10 +1207,10 @@ class Report():
             self.logo(ws12)
 
     def prezzi_13(self):
-        '''
+        """
         Crea la tredicesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -1333,10 +1333,10 @@ class Report():
         self.logo(ws13)
 
     def prezzi_14(self):
-        '''
+        """
         Crea la quattordicesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -1495,10 +1495,10 @@ class Report():
         self.logo(ws16)
 
     def sintesi_17(self):
-        '''
+        """
         Crea la diciasettesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -1755,10 +1755,10 @@ class Report():
                 ws18[row[_].coordinate].number_format = '#,0'
 
     def azioni_19(self):
-        '''
+        """
         Crea la diciannovesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -1873,10 +1873,10 @@ class Report():
             ws19[row[len_header_19-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def obb_governative_20(self):
-        '''
+        """
         Crea la ventesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2004,10 +2004,10 @@ class Report():
             ws20[row[len_header_20-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def obb_corporate_21(self):
-        '''
+        """
         Crea la ventunesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2122,10 +2122,10 @@ class Report():
             ws21[row[len_header_21-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def obb_totale_22(self):
-        '''
+        """
         Crea la ventiduesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2218,10 +2218,10 @@ class Report():
                 ws22[row[_].coordinate].number_format = '#,0'
 
     def liquidità_23(self):
-        '''
+        """
         Crea la ventitreesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2329,10 +2329,10 @@ class Report():
                 ws23[row[_].coordinate].number_format = '#,0'
 
     def liq_totale_24(self):
-        '''
+        """
         Crea la ventiquattresima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2423,10 +2423,10 @@ class Report():
                 ws24[row[_].coordinate].number_format = '#,0'
 
     def gestioni_25(self):
-        '''
+        """
         Crea la venticinquesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2542,10 +2542,10 @@ class Report():
             ws25[row[len_header_25-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def inv_alt_26(self):
-        '''
+        """
         Crea la ventiseiesima pagina.
         Formattazione e tabella.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
@@ -2663,10 +2663,10 @@ class Report():
 
     def asset_allocation_27(self):
         # TODO : i pezzi di torta devono avere sempre gli stessi colori
-        '''
+        """
         Crea la ventisettesima pagina.
         Formattazione, tabella e grafico.
-        '''
+        """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
         # Carica asset-allocation gestioni
@@ -2804,10 +2804,10 @@ class Report():
         ws27.add_chart(chart, 'D20')
 
     def contatti_28(self):
-        '''
+        """
         Crea la ventottesima pagina.
         Solo formattazione.
-        '''
+        """
         ws28 = self.wb.create_sheet('28.contatti')
         ws28 = self.wb['28.contatti']
         self.wb.active = ws28
@@ -2845,10 +2845,10 @@ class Report():
         self.logo(ws28)
 
     def layout(self):
-        '''
+        """
         Cambia il layout dei fogli non nascosti: A4, orizzontale, centrato orizzontalmente, con margini personalizzati, adatta alla pagina oriz. e vert.
         Aggiunge il numero di pagina.
-        '''
+        """
         # Modifica layout di pagina e aggiungi numero di pagina a tutti i fogli
         for sheet in self.wb:
             if sheet.sheet_state != 'hidden':
@@ -2865,15 +2865,16 @@ class Report():
                 sheet.oddFooter.right.text = numero_pagina # assegna il numero del foglio al piè di pagina destro
 
     def salva_file(self):
-        '''
+        """
         Salva il file excel.
-        '''
+        """
         self.wb.save(self.path.joinpath('report.xlsx'))
 
 
 if __name__ == "__main__":
     start = time.time()
     # TODO : riduci la costante SFASAMENTO_DATI (riga 863 di un'unità)
+    # Dio porco
     _ = Report(t1='28/02/2022')
     _.copertina_1()
     _.indice_2()
