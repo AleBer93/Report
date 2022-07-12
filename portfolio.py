@@ -63,7 +63,7 @@ class Report():
         self.t0_3Y = (self.t1 - dateutil.relativedelta.relativedelta(years=+3))#.strftime("%d/%m/%Y") # data t1 tre anni fa
         print(f"Tre anni fa : {self.t0_3Y}.")
         # L'intervallo del report lo vedi dalle date in agosto_2020.
-        self.path = Path('C:\\Users\\Administrator\\Desktop\\Sbwkrq\\Report')
+        self.path = Path('C:\\Users\\Alessio\\Documents\\Sbwkrq\\Report')
         self.file_portafoglio = self.path.joinpath(file_portafoglio)
         self.image = self.path.joinpath('img', 'logo_B&S.bmp')
         self.cellh = lambda x: cm_to_EMU((x * 49.77)/99)
@@ -586,8 +586,8 @@ class Report():
         chart = BarChart()
         chart.type = 'col'
         chart.title = "MENSILE"
-        chart.y_axis.scaling.min = -0.03
-        chart.y_axis.scaling.max = 0.03
+        chart.y_axis.scaling.min = -0.05
+        chart.y_axis.scaling.max = 0.05
         ws7['J13'] = 'Ptf'
         ws7['J14'] = perf_ptf_month
         ws7['J14'].number_format = FORMAT_PERCENTAGE_00
@@ -860,7 +860,7 @@ class Report():
         più a lungo, proiettandoli nel futuro. Definisco una costante chiamata SFASAMENTO_DATI che aggiunge n periodi alle serie
         storiche di quei tre casi. Nel futuro questa variabile è da togliere.
         """
-        SFASAMENTO_DATI = 12
+        SFASAMENTO_DATI = 8
         # Riattiva scenari coni
         ws_dati_cono = self.wb['Dati_cono']
         # Riattiva performance ptf
@@ -951,7 +951,7 @@ class Report():
         ancoraggio = OneCellAnchor(_from=maker, ext=size)
         ws9_2.add_chart(chart)
         chart.anchor = ancoraggio
-        chart.y_axis.scaling.min = 95 # valore minimo asse y
+        chart.y_axis.scaling.min = 90 # valore minimo asse y
         ws9_2.row_dimensions[5].height = 11.25
 
         # Logo
@@ -1638,7 +1638,6 @@ class Report():
                 ws17[row[_].coordinate].number_format = '#,0'
 
     def valuta_18(self):
-        # TODO : scomporre le gestioni nelle loro valute è necessario?
         """
         Crea la diciottesima pagina.
         Formattazione e tabella.
@@ -1701,14 +1700,14 @@ class Report():
 
         tipo_divisa = list(portfolio['DIVISA'].unique())
         tipo_divisa.sort()
-        tipo_divisa.insert(len(tipo_divisa), 'ALTRE VALUTE')
+        # tipo_divisa.insert(len(tipo_divisa), 'ALTRE VALUTE')
         len_tipo_divisa = len(tipo_divisa)
         num_intermediari = len(portfolio['INTERMEDIARIO'].unique())
         lunghezza_colonna_18 = []
         #tipo_divisa_dict = {'CASH' : 'LIQUIDITÀ', 'GP' : 'GESTIONI', 'EQUITY' : 'AZIONI', 'CASH_FOREIGN_CURR' : 'LIQUIDITÀ IN VALUTA', 'CORPORATE_BOND' : 'OBBLIGAZIONI CORPORATE', 'GOVERNMENT_BOND' : 'OBBLIGAZIONI GOVERNATIVE', 'ALTERNATIVE_ASSET' : 'INVESTIMENTI ALTERNATIVI', 'HEDGE_FUND' : 'HEDGE FUND'}
         for row in ws18.iter_rows(min_row=8, max_row=10 + len_tipo_divisa -1, min_col=min_col, max_col=min_col + len_header_18):
             if row[0].row > 9:
-                ws18[row[0].coordinate].value = tipo_divisa[0] 
+                ws18[row[0].coordinate].value = tipo_divisa[0]
                 del tipo_divisa[0]
                 ws18[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
                 ws18[row[0].coordinate].font = Font(name='Times New Roman', size=9, color='000000')
@@ -1734,7 +1733,7 @@ class Report():
 
                 #ws18[row[0].coordinate].value = tipo_divisa_dict[ws18[row[0].coordinate].value] # aggiorna valori dell'indice con i nomi nel dizionario
                 lunghezza_colonna_18.append(len(ws18.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
-                ws18.column_dimensions[row[0].column_letter].width = max(lunghezza_colonna_18) + 2.5 # modifica larghezza colonna
+                ws18.column_dimensions[row[0].column_letter].width = max(lunghezza_colonna_18) + 7.5 # modifica larghezza colonna
 
 
         # Somma per intermediari
@@ -2874,8 +2873,7 @@ class Report():
 if __name__ == "__main__":
     start = time.time()
     # TODO : riduci la costante SFASAMENTO_DATI (riga 863 di un'unità)
-    # Dio porco
-    _ = Report(t1='28/02/2022')
+    _ = Report(t1='30/06/2022')
     _.copertina_1()
     _.indice_2()
     _.analisi_di_mercato_3()
