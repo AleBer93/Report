@@ -9,6 +9,7 @@ from openpyxl.chart import AreaChart, BarChart, LineChart, PieChart, Reference
 from openpyxl.chart.label import DataLabel, DataLabelList
 from openpyxl.chart.layout import Layout, ManualLayout
 from openpyxl.chart.legend import LegendEntry
+from openpyxl.chart.marker import DataPoint
 from openpyxl.chart.shapes import GraphicalProperties
 from openpyxl.chart.text import RichText, Text
 from openpyxl.chart.title import Title
@@ -38,10 +39,8 @@ from sqlalchemy import MetaData, Table, create_engine
 
 class Report():
     """Crea un report di un portafoglio."""
-    # TODO: generalizza lo script per fare report mensili / bimensili / trimestrali...
     # TODO: quando calcolo le performance, devo rettificare le quantità. Se ad esempio un fondo disinvestisse delle quote nel
     # mese successivo, sembrebbe che avrebbe generato una perdita nel mese precedente, mentre c'è stato solo un disinvestimento.
-    # TODO: isola PHOENIX facendola finire in altro come intermediario
 
     def __init__(self, t1, file_portafoglio='artes.xlsx'):
         """
@@ -1089,7 +1088,7 @@ class Report():
     def prezzi_13(self):
         """
         Crea la tredicesima pagina.
-        Strumenti di Credito Artigiano e JPM
+        Strumenti di Crédit Agricole e JPM
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1098,7 +1097,7 @@ class Report():
         ws = self.wb['13.prezzi_2']
         self.wb.active = ws
 
-        ws['A1'] = 'Credito Artigiano'
+        ws['A1'] = 'Crédit Agricole'
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
         ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
@@ -1123,7 +1122,7 @@ class Report():
         ws.merge_cells('J6:J7')
         ws.merge_cells('K6:L7')
 
-        credito_artigiano_strumenti_liquidi = portfolio[((portfolio['INTERMEDIARIO']=='Credito Artigiano Artes') | (portfolio['INTERMEDIARIO']=='Credito Artigiano B.N.')) & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
+        credito_artigiano_strumenti_liquidi = portfolio[((portfolio['INTERMEDIARIO']=='Crédit Agricole Artes') | (portfolio['INTERMEDIARIO']=='Crédit Agricole B.N.')) & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
         credito_artigiano_proddoti = credito_artigiano_strumenti_liquidi.PRODOTTO
         credito_artigiano_proddoti = list(credito_artigiano_proddoti)
         for row in ws.iter_rows(min_row=8, max_row=credito_artigiano_strumenti_liquidi.shape[0] + 8 -1, min_col=1, max_col=12):
@@ -1215,7 +1214,7 @@ class Report():
     def prezzi_14(self):
         """
         Crea la quattordicesima pagina.
-        Strumenti di UBI e Mediolanum
+        Strumenti di Intesa San Paolo e Mediolanum
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1225,7 +1224,7 @@ class Report():
         ws = self.wb['14.prezzi_3']
         self.wb.active = ws
 
-        ws['A1'] = 'Ubi Ita'
+        ws['A1'] = 'Intesa San Paolo'
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
         ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
@@ -1250,7 +1249,7 @@ class Report():
         ws.merge_cells('J6:J7')
         ws.merge_cells('K6:L7')
 
-        ubi_strumenti_liquidi = portfolio[(portfolio['INTERMEDIARIO']=='Ubi Ita') & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR') & (portfolio['PRODOTTO']!='ANTHARES SPA')]
+        ubi_strumenti_liquidi = portfolio[(portfolio['INTERMEDIARIO']=='Intesa San Paolo') & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
         ubi_proddoti = ubi_strumenti_liquidi.PRODOTTO
         ubi_proddoti = list(ubi_proddoti)
         for row in ws.iter_rows(min_row=8, max_row=ubi_strumenti_liquidi.shape[0] + 8 -1, min_col=1, max_col=12):
@@ -2608,7 +2607,11 @@ class Report():
         len_tipo_strumento_nogp = len(tipo_strumento_nogp)
         num_intermediari = len(portfolio['INTERMEDIARIO'].unique())
         lunghezza_colonna_27 = []
-        tipo_strumento_dict = {'CASH' : 'LIQUIDITÀ', 'GP' : 'GESTIONI', 'EQUITY' : 'AZIONI', 'CASH_FOREIGN_CURR' : 'LIQUIDITÀ IN VALUTA', 'CORPORATE_BOND' : 'OBBLIGAZIONI CORPORATE', 'GOVERNMENT_BOND' : 'OBBLIGAZIONI GOVERNATIVE', 'ALTERNATIVE_ASSET' : 'INVESTIMENTI ALTERNATIVI', 'HEDGE_FUND' : 'HEDGE FUND'}
+        tipo_strumento_dict = {
+            'CASH' : 'LIQUIDITÀ', 'GP' : 'GESTIONI', 'EQUITY' : 'AZIONI', 'CASH_FOREIGN_CURR' : 'LIQUIDITÀ IN VALUTA', 
+            'CORPORATE_BOND' : 'OBBLIGAZIONI CORPORATE', 'GOVERNMENT_BOND' : 'OBBLIGAZIONI GOVERNATIVE', 
+            'ALTERNATIVE_ASSET' : 'INVESTIMENTI ALTERNATIVI', 'HEDGE_FUND' : 'HEDGE FUND'
+        }
         for row in ws.iter_rows(min_row=8, max_row=10 + len_tipo_strumento_nogp -1, min_col=min_col, max_col=min_col + len_header_27):
             if row[0].row > 9:
                 ws[row[0].coordinate].value = tipo_strumento_nogp[0] # carica i tipi di strumenti nell'indice
@@ -2669,7 +2672,9 @@ class Report():
         chart.set_categories(labels)
         chart.dataLabels = DataLabelList()
         chart.dataLabels.showVal = True
-        chart.dataLabels.textProperties = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=1200, b=True)), endParaRPr=CharacterProperties(sz=1200, b=True))])
+        chart.dataLabels.textProperties = RichText(
+            p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=1200, b=True)),
+            endParaRPr=CharacterProperties(sz=1200, b=True))])
         chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
         ws.add_chart(chart, 'D20')
 
@@ -2742,8 +2747,7 @@ class Report():
 
 if __name__ == "__main__":
     start = time.time()
-    # TODO : riduci la costante SFASAMENTO_DATI (riga 865 di un'unità)
-    # TODO: a marzo rimuovi 'ANTHARES SPA' dagli strumenti liquidi di UBI nel metodo prezzi_14 1246
+    # TODO : riduci la costante SFASAMENTO_DATI (riga 786 di un'unità)
     _ = Report(t1='31/12/2022')
     _.copertina_1()
     _.indice_2()
