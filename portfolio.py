@@ -19,8 +19,7 @@ from openpyxl.drawing.xdr import XDRPositiveSize2D
 from openpyxl.styles import (Alignment, Border, Font,
                              PatternFill, Side)
 from openpyxl.styles.numbers import FORMAT_NUMBER_00 , FORMAT_PERCENTAGE_00
-from openpyxl.utils.dataframe import \
-    dataframe_to_rows  # Per l'import di dataframe
+from openpyxl.utils.dataframe import dataframe_to_rows  # Per l'import di dataframe
 from openpyxl.utils.units import cm_to_EMU, pixels_to_EMU
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.page import PageMargins  # Opzioni di stampa
@@ -29,9 +28,6 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 class Report():
     """Crea un report di un portafoglio."""
-    # TODO: quando calcolo le performance, devo rettificare le quantità. Se ad esempio un fondo disinvestisse delle quote nel
-    # mese successivo, sembrebbe che avrebbe generato una perdita nel mese precedente, mentre c'è stato solo un disinvestimento.
-    # TODO : i pezzi di torta devono avere sempre gli stessi colori nell'asset allocation finale
 
     def __init__(self, t1, file_portafoglio='artes.xlsx'):
         """
@@ -40,10 +36,10 @@ class Report():
         Arguments:
             t1 {str} = data finale
             file_portafoglio {str} = nome del file excel da lavorare
-
-        centimeters = pixels * 2.54 / 96
         """
         self.wb = Workbook()
+
+        # Dates
         self.t1 = datetime.datetime.strptime(t1, '%d/%m/%Y')
         print(f"Data report : {self.t1}.")
         # t1 un mese fa
@@ -57,9 +53,12 @@ class Report():
         print(f"L'ultimo giorno dell'anno scorso : {self.t0_ytd}.")
         # t1 tre anni fa
         self.t0_3Y = (self.t1 - dateutil.relativedelta.relativedelta(years=+3))#.strftime("%d/%m/%Y")
+        # self.t0_3Y = '2020-02-29 00:00:00'
         print(f"Tre anni fa : {self.t0_3Y}.")
 
-        self.path = Path('C:\\Users\\Alessio\\Documents\\Sbwkrq\\Report')
+        # Directory
+        directory = Path().cwd()
+        self.path = directory
         self.file_portafoglio = self.path.joinpath(file_portafoglio)
         self.mesi_dict = {
             1: 'Gennaio', 2: 'Febbraio', 3: 'Marzo', 4: 'Aprile', 5: 'Maggio', 6: 'Giugno', 7: 'Luglio', 8: 'Agosto', 
@@ -72,13 +71,14 @@ class Report():
 
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
+
+        # Controvalori
         controvalore_t1 = portfolio['TOTALE t1'].sum()
         print(f"\nIl controvalore del portafoglio è : {round(controvalore_t1, 2)}.")
-        
         controvalore_t0_1m = portfolio['TOTALE t0'].sum()
         print(f"Il controvalore del portafoglio nel mese precedente era : {round(controvalore_t0_1m, 2)}.")
 
-    def __logo(self, ws: Worksheet, picture: Path | str = Path('.\img\logo_B&S.bmp'),
+    def __logo(self, ws: Worksheet, picture: Path | str = Path(r'.\\img\\logo_B&S.bmp'),
         col: int = 5, colOff: float = 0.3, row: int = 34, rowOff: float = 0):   
         """
         Aggiunge un'immagine in coordinate precise del foglio, applicando uno spostamento.
@@ -87,7 +87,7 @@ class Report():
             ws {Worksheet} -- foglio in cui incollare l'immagine
 
         Keyword Arguments:
-            picture {Path  |  str} -- percorso in cui si trova l'immagine (default: {Path('.\img\logo_B&S.bmp')})
+            picture {Path  |  str} -- percorso in cui si trova l'immagine (default: {Path(r'.\\img\\logo_B&S.bmp')})
             col {int} -- colonna di partenza in cui incollare l'immagine (default: {5})
             colOff {float} -- spostamento dalla colonna di partenza (default: {0.3})
             row {int} -- riga di partenza in cui incollare l'immagine (default: {34})
@@ -103,10 +103,8 @@ class Report():
         ws.add_image(logo)
         logo.anchor = ancoraggio
 
-    def __textbox(self, ws: Worksheet, min_row: int, max_row: int, min_col: int, max_col: int,
-        fill_type: str = 'solid', fill_color: str = 'FFFFFF', font_name: str = 'Times New Roman',
-        font_size: int = 12, font_color: str = '31869B', border_style: str = 'medium', border_color: str = '31869B'):
-        """Simula una text-box
+    def __textbox(self, ws: Worksheet, min_row: int, max_row: int, min_col: int, max_col: int):
+        """Simulazione di una text-box
 
         Arguments:
             ws {Worksheet} -- foglio excel in cui creare la text box
@@ -114,42 +112,42 @@ class Report():
             max_row {int} -- coordinate dove inserire la text box
             min_col {int} -- coordinate dove inserire la text box
             max_col {int} -- coordinate dove inserire la text box
-
-        Keyword Arguments:
-            fill_type {str} -- colore del riempimento della text box (default: {'solid'})
-            fill_color {str} -- _colore del riempimento della text box (default: {'FFFFFF'})
-            font_name {str} -- font del testo nella text box (default: {'Times New Roman'})
-            font_size {int} -- dimensione del testo nella text box (default: {12})
-            font_color {str} -- colore del testo nella text box (default: {'31869B'})
-            border_style {str} -- stile del bordo da applicare alla text box (default: {'medium'})
-            border_color {str} -- colore da applicare al bordo della text box (default: {'31869B'})
         """        
         for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
             for _ in range(max_col-min_col+1):
-                ws[row[_].coordinate].fill = PatternFill(fill_type=fill_type, fgColor=fill_color)
-                ws[row[_].coordinate].font = Font(name=font_name, size=font_size, color=font_color)
-            ws[row[0].coordinate].border = Border(left=Side(border_style=border_style, color=border_color))
-            ws[row[max_col-min_col].coordinate].border = Border(right=Side(border_style=border_style, color=border_color))
+                ws[row[_].coordinate].fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
+                ws[row[_].coordinate].font = Font(name='Times New Roman', size=12, color='31869B')
+            ws[row[0].coordinate].border = Border(left=Side(border_style='medium', color='31869B'))
+            ws[row[max_col-min_col].coordinate].border = Border(right=Side(border_style='medium', color='31869B'))
             if row[0].row == min_row:
                 for _ in range(max_col-min_col+1):
                     if row[_].column == min_col:
-                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color), left=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(
+                            top=Side(border_style='medium', color='31869B'), 
+                            left=Side(border_style='medium', color='31869B'))
                     elif row[_].column == max_col:
-                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color), right=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(
+                            top=Side(border_style='medium', color='31869B'), 
+                            right=Side(border_style='medium', color='31869B'))
                     else:
-                        ws[row[_].coordinate].border = Border(top=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(top=Side(border_style='medium', color='31869B'))
             elif row[0].row == max_row:
                 for _ in range(max_col-min_col+1):
                     if row[_].column == min_col:
-                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color), left=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(
+                            bottom=Side(border_style='medium', color='31869B'), 
+                            left=Side(border_style='medium', color='31869B'))
                     elif row[_].column == max_col:
-                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color), right=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(
+                            bottom=Side(border_style='medium', color='31869B'), 
+                            right=Side(border_style='medium', color='31869B'))
                     else:
-                        ws[row[_].coordinate].border = Border(bottom=Side(border_style=border_style, color=border_color))
+                        ws[row[_].coordinate].border = Border(
+                            bottom=Side(border_style='medium', color='31869B'))
 
     def copertina_1(self):
         """
-        Crea la prima pagina.
+        Crea la copertina
         """
         ws = self.wb.active
         ws.title = '1.copertina'
@@ -171,7 +169,7 @@ class Report():
         ws['A33'].fill = PatternFill(fill_type='solid', fgColor='31869B')
         ws.merge_cells('A33:L33')
         # Logo
-        logo = Image(Path('.\img\logo_B&S.bmp'))
+        logo = Image(Path(r'.\\img\\logo_B&S.bmp'))
         ws.add_image(logo, 'F27')
         logo.height = 75.59
         logo.width = 128.88188976377952755905511811024
@@ -771,11 +769,7 @@ class Report():
         """
         Crea la nona pagina.
         Riattiva fogli ws_dati_bk, ws_dati_cono e ws_dati_pf.
-        In partenza 31/01/2022 si vedevano solo due dati, e mi è stato chiesto di sviluppare il cono dei tre casi probabilistici
-        più a lungo, proiettandoli nel futuro. Definisco una costante chiamata SFASAMENTO_DATI che aggiunge n periodi alle serie
-        storiche di quei tre casi. Nel futuro questa variabile è da togliere.
         """
-        SFASAMENTO_DATI = 2
         # Riattiva scenari coni
         ws_dati_cono = self.wb['Dati_cono']
         # Riattiva performance ptf
@@ -808,7 +802,7 @@ class Report():
         #     if ws_dati_cono[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
         #         print(f"La riga del mese t1 è : {ws_dati_cono[row[0].coordinate].row}.")
         #         ws_dati_cono_max_row = ws_dati_cono[row[0].coordinate].row
-        data = Reference(ws_dati_cono, min_col=11, max_col=13, min_row=180, max_row=ws_dati_cono_max_row+SFASAMENTO_DATI) # hard coding
+        data = Reference(ws_dati_cono, min_col=11, max_col=13, min_row=180, max_row=ws_dati_cono_max_row) # hard coding
         chart.add_data(data, titles_from_data='False')
         # for row in ws_dati_bk.iter_rows(min_col=0, max_col=0):
         #     if ws_dati_bk[row[0].coordinate].value == self.t1.strftime('%m-%Y'):
@@ -829,19 +823,19 @@ class Report():
         s0.graphicalProperties.line.solidFill = '0000FF'
         s0.graphicalProperties.line.width = 12700
         s0.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-181, numFmt='0.00', showVal=True)
         s0.dLbls.dLbl.append(dl)
         s1 = chart.series[1]
         s1.graphicalProperties.line.solidFill = 'FF00FF'
         s1.graphicalProperties.line.width = 12700
         s1.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-181, numFmt='0.00', showVal=True)
         s1.dLbls.dLbl.append(dl)
         s2 = chart.series[2]
         s2.graphicalProperties.line.solidFill = '000080'
         s2.graphicalProperties.line.width = 12700
         s2.dLbls = DataLabelList()
-        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row+SFASAMENTO_DATI-181, numFmt='0.00', showVal=True)
+        dl = DataLabel(dLblPos='t', idx=ws_dati_cono_max_row-181, numFmt='0.00', showVal=True)
         s2.dLbls.dLbl.append(dl)
         s3 = chart.series[3]
         s3.graphicalProperties.line.solidFill = '177245'
@@ -856,7 +850,7 @@ class Report():
         dl = DataLabel(dLblPos='t', idx=ws_dati_pf_max_row-181, numFmt='0.00', showVal=True)
         s4.dLbls.dLbl.append(dl)
 
-        dates = Reference(ws_dati_cono, min_col=1, max_col=1, min_row=181, max_row=ws_dati_cono_max_row+SFASAMENTO_DATI)
+        dates = Reference(ws_dati_cono, min_col=1, max_col=1, min_row=181, max_row=ws_dati_cono_max_row)
         chart.set_categories(dates)
         chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
         size = XDRPositiveSize2D(pixels_to_EMU(812.598), pixels_to_EMU(453.54))
@@ -944,7 +938,9 @@ class Report():
         intermediari.remove('Altro')
         intermediari.insert(len(intermediari), 'Interessi Phoenix')
         intermediari.insert(len(intermediari), 'Totale Complessivo')
-        # intermediari.remove('Mediolanum') # Mediolanum non veniva considerata, ora sì.
+        # # Elimina per questo mese le due posizioni sotto
+        intermediari.remove('Banca Patrimoni Nespoli')
+        intermediari.remove('Banca Valsabbina')
         len_int = len(intermediari)
         # Corpo tabella
         for row in ws.iter_rows(min_col=min_col, max_col=min_col+len_header_11-1, min_row=min_row+1, max_row=min_row+1+len_int-1):
@@ -1002,25 +998,27 @@ class Report():
         # Logo
         self.__logo(ws, colOff=0, row=min_row + len_int + 8)
 
-    def prezzi_12(self):
+    def tabella_prezzi(self, ws: Worksheet, min_row: int, intermediario: str, strumenti: pd.DataFrame) -> int:
+        """Crea una tabella dei prezzi degli strumenti di un intermediario
+
+        Arguments:
+            ws {Worksheet} -- sheet
+            min_row {int} -- minimum row
+            intermediario {str} -- broker
+            strumenti {pd.DataFrame} -- assets
+
+        Returns:
+            int -- updated minimum row
         """
-        Crea la dodicesima pagina.
-        Strumenti di Corner.
-        """
-        # Carica portafoglio
-        portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
-        # 12.Prezzi 1
-        ws = self.wb.create_sheet('12.prezzi_1')
-        ws = self.wb['12.prezzi_1']
-        self.wb.active = ws
-        min_row = 1
+        min_row = min_row
         min_col = 1
+        max_col = 12
         # Titolo
-        ws['A1'] = 'Corner'
-        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws.merge_cells('A1:L4')
+        ws.cell(row=min_row, column=min_col, value=intermediario) 
+        ws.cell(row=min_row, column=min_col).alignment = Alignment(horizontal='center', vertical='center')
+        ws.cell(row=min_row, column=min_col).font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
+        ws.cell(row=min_row, column=min_col).fill = PatternFill(fill_type='solid', fgColor='31869B')
+        ws.merge_cells(start_row=min_row, start_column=min_col, end_row=min_row+3, end_column=max_col)
         min_row += 5
         # Creazione tabella
         header = ['Nome', '', '', '', '', 'Valuta', 'Quantità', 'Prezzo di carico', 'Prezzo attuale', '∆ prezzo', 'Ctv', '']
@@ -1030,304 +1028,142 @@ class Report():
             ws[column[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF', bold=True)
             ws[column[0].coordinate].alignment = Alignment(horizontal='center', vertical='center')
             ws[column[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-
-        ws.merge_cells('A6:E7')
-        ws.merge_cells('F6:F7')
-        ws.merge_cells('G6:G7')
-        ws.merge_cells('H6:H7')
-        ws['H6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('I6:I7')
-        ws['I6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('J6:J7')
-        ws.merge_cells('K6:L7')
+        mid_col = min_col
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col+4)
+        mid_col += 5
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col)
+        mid_col += 1
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col)
+        mid_col += 1
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col)
+        ws.cell(row=min_row, column=mid_col).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        mid_col += 1
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col)
+        ws.cell(row=min_row, column=mid_col).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        mid_col += 1
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col)
+        mid_col += 1
+        ws.merge_cells(start_row=min_row, start_column=mid_col, end_row=min_row+1, end_column=mid_col+1)
+        min_row += 2
         # Corpo tabella
-        corner_strumenti_liquidi = portfolio[(portfolio['INTERMEDIARIO']=='Corner') & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
-        corner_proddoti = corner_strumenti_liquidi.PRODOTTO
-        corner_proddoti = list(corner_proddoti)
-        for row in ws.iter_rows(min_row=8, max_row=corner_strumenti_liquidi.shape[0] + 8 -1, min_col=1, max_col=12):
-            ws[row[0].coordinate].value = corner_proddoti[0]
-            del corner_proddoti[0]
+        prodotti = strumenti['PRODOTTO'].to_list()
+        for row in ws.iter_rows(min_row=min_row, max_row=strumenti.shape[0] + min_row - 1, min_col=1, max_col=12):
+            ws[row[0].coordinate].value = prodotti[0]
+            del prodotti[0]
             ws[row[0].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].value = (corner_strumenti_liquidi.loc[corner_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
+            ws[row[5].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
             ws[row[5].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[5].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[6].coordinate].value = (corner_strumenti_liquidi.loc[corner_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
+            ws[row[6].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
             ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (corner_strumenti_liquidi.loc[corner_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
+            ws[row[7].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
             ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[8].coordinate].value = (corner_strumenti_liquidi.loc[corner_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
+            ws[row[8].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
             ws[row[8].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[8].coordinate].number_format = FORMAT_NUMBER_00
             ws[row[9].coordinate].value = (ws[row[8].coordinate].value / ws[row[7].coordinate].value) - 1
             ws[row[9].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[9].coordinate].alignment = Alignment(horizontal='center')
             ws[row[9].coordinate].number_format = FORMAT_PERCENTAGE_00
-            ws[row[10].coordinate].value = (corner_strumenti_liquidi.loc[corner_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
+            ws[row[10].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
             ws[row[10].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[10].coordinate].alignment = Alignment(horizontal='center')
             ws[row[10].coordinate].number_format = '€ #,##0.00'
             ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[0].column, end_column=row[4].column)
             ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[10].column, end_column=row[11].column)
-        
-        if len(corner_strumenti_liquidi) > 26:
-            self.__logo(ws, row=35+(len(corner_strumenti_liquidi)-26))
+        min_row += strumenti.shape[0]
+        return min_row + 2
+
+    def prezzi_12(self):
+        """
+        Crea la dodicesima pagina.
+        Strumenti di Banca Patrimoni e Banca Valsabbina
+        """
+        # Carica portafoglio
+        portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
+        # Crea foglio
+        ws = self.wb.create_sheet('12.prezzi')
+        ws = self.wb['12.prezzi']
+        self.wb.active = ws
+        min_row = 1
+        # Crea tabella Banca Patrimoni
+        banca_patrimoni_strumenti_liquidi = portfolio[
+            ((portfolio['INTERMEDIARIO']=='Banca Patrimoni Nespoli') | 
+             (portfolio['INTERMEDIARIO']=='Banca Patrimoni Artes') |
+             (portfolio['INTERMEDIARIO']=='Banca Patrimoni Trust')) &
+               (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Banca Patrimoni', banca_patrimoni_strumenti_liquidi)
+        # Crea tabella Banca Valsabbina
+        banca_valsabbina_strumenti_liquidi = portfolio[
+            (portfolio['INTERMEDIARIO']=='Banca Valsabbina') &
+              (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Banca Valsabbina', banca_valsabbina_strumenti_liquidi)
+        # Logo
+        if len(banca_patrimoni_strumenti_liquidi+banca_valsabbina_strumenti_liquidi) > 26:
+            self.__logo(ws, row=35+(len(banca_patrimoni_strumenti_liquidi+banca_valsabbina_strumenti_liquidi)-26))
         else:
             self.__logo(ws)
 
     def prezzi_13(self):
         """
         Crea la tredicesima pagina.
-        Strumenti di Crédit Agricole e JPM
+        Strumenti di Corner.
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
-
-        ws = self.wb.create_sheet('13.prezzi_2')
-        ws = self.wb['13.prezzi_2']
+        # Crea foglio
+        ws = self.wb.create_sheet('13.prezzi')
+        ws = self.wb['13.prezzi']
         self.wb.active = ws
-
-        ws['A1'] = 'Crédit Agricole'
-        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws.merge_cells('A1:L4')
-
-        # Creazione tabella
-        header_13 = ['Nome', '', '', '', '', 'Valuta', 'Quantità', 'Prezzo di carico', 'Prezzo attuale', '∆ prezzo', 'Ctv', '']
-        for column in ws.iter_cols(min_col=1, max_col=12, min_row=6, max_row=6):
-            ws[column[0].coordinate].value = header_13[0]
-            del header_13[0]
-            ws[column[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF', bold=True)
-            ws[column[0].coordinate].alignment = Alignment(horizontal='center', vertical='center')
-            ws[column[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-
-        ws.merge_cells('A6:E7')
-        ws.merge_cells('F6:F7')
-        ws.merge_cells('G6:G7')
-        ws.merge_cells('H6:H7')
-        ws['H6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('I6:I7')
-        ws['I6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('J6:J7')
-        ws.merge_cells('K6:L7')
-
-        credito_artigiano_strumenti_liquidi = portfolio[((portfolio['INTERMEDIARIO']=='Crédit Agricole Artes') | (portfolio['INTERMEDIARIO']=='Crédit Agricole B.N.')) & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
-        credito_artigiano_proddoti = credito_artigiano_strumenti_liquidi.PRODOTTO
-        credito_artigiano_proddoti = list(credito_artigiano_proddoti)
-        for row in ws.iter_rows(min_row=8, max_row=credito_artigiano_strumenti_liquidi.shape[0] + 8 -1, min_col=1, max_col=12):
-            ws[row[0].coordinate].value = credito_artigiano_proddoti[0]
-            del credito_artigiano_proddoti[0]
-            ws[row[0].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].value = (credito_artigiano_strumenti_liquidi.loc[credito_artigiano_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
-            ws[row[5].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[6].coordinate].value = (credito_artigiano_strumenti_liquidi.loc[credito_artigiano_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
-            ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (credito_artigiano_strumenti_liquidi.loc[credito_artigiano_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
-            ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[8].coordinate].value = (credito_artigiano_strumenti_liquidi.loc[credito_artigiano_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
-            ws[row[8].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[8].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[9].coordinate].value = (ws[row[8].coordinate].value / ws[row[7].coordinate].value) - 1
-            ws[row[9].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[9].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[9].coordinate].number_format = FORMAT_PERCENTAGE_00
-            ws[row[10].coordinate].value = (credito_artigiano_strumenti_liquidi.loc[credito_artigiano_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
-            ws[row[10].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[10].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[10].coordinate].number_format = '€ #,##0.00'
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[0].column, end_column=row[4].column)
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[10].column, end_column=row[11].column)
-
-        # Creazione tabella
-        #print(ws.cell(row=jpm_strumenti_liquidi.shape[0] + 8 + 1, column=1).coordinate)
-        jpm_strumenti_liquidi = portfolio[portfolio['PRODOTTO']=='HIGHBRIDGE CAP CORP']
-        jpm_proddoti = jpm_strumenti_liquidi.PRODOTTO
-        jpm_proddoti = list(jpm_proddoti)
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 1, column=1,  value='JPMorgan')
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 1, column=1).alignment = Alignment(horizontal='center', vertical='center')
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 1, column=1).font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 1, column=1).fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 1, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 4, start_column=1, end_column=12)
-        #print(jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 2 - 1)
-
-        header_13 = ['Nome', '', '', '', '', 'Valuta', 'Quantità', 'Prezzo di carico', 'Prezzo attuale', '∆ prezzo', 'Ctv', '']
-        for column in ws.iter_cols(min_col=1, max_col=12, min_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, max_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6):
-            ws[column[0].coordinate].value = header_13[0]
-            del header_13[0]
-            ws[column[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF', bold=True)
-            ws[column[0].coordinate].alignment = Alignment(horizontal='center', vertical='center')
-            ws[column[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=1, end_column=5)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=6, end_column=6)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=7, end_column=7)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=8, end_column=8)
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, column=8).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=9, end_column=9)
-        ws.cell(row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, column=9).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=10, end_column=10)
-        ws.merge_cells(start_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 6, end_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 7, start_column=11, end_column=12)
-
-        for row in ws.iter_rows(min_row=credito_artigiano_strumenti_liquidi.shape[0] + 8 + 9, max_row=jpm_strumenti_liquidi.shape[0] + credito_artigiano_strumenti_liquidi.shape[0] + 8 + 9 - 1, min_col=1, max_col=12):
-            ws[row[0].coordinate].value = jpm_proddoti[0]
-            del jpm_proddoti[0]
-            ws[row[0].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].value = (jpm_strumenti_liquidi.loc[jpm_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
-            ws[row[5].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[6].coordinate].value = (jpm_strumenti_liquidi.loc[jpm_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
-            ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (jpm_strumenti_liquidi.loc[jpm_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
-            ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[8].coordinate].value = (jpm_strumenti_liquidi.loc[jpm_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
-            ws[row[8].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[8].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[9].coordinate].value = 0.6089 # viene inserito il delta massimo, perché il prezzo dipende dal controvalore e non il contrario
-            ws[row[9].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[9].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[9].coordinate].number_format = FORMAT_PERCENTAGE_00
-            ws[row[10].coordinate].value = (jpm_strumenti_liquidi.loc[jpm_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
-            ws[row[10].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[10].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[10].coordinate].number_format = '€ #,##0.00'
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[0].column, end_column=row[4].column)
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[10].column, end_column=row[11].column)
-
-        self.__logo(ws)
+        min_row = 1
+        # Crea tabella Corner
+        corner_strumenti_liquidi = portfolio[
+            (portfolio['INTERMEDIARIO']=='Corner') &
+              (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Corner', corner_strumenti_liquidi)
+        # Logo
+        if len(corner_strumenti_liquidi) > 26:
+            self.__logo(ws, row=35+(len(corner_strumenti_liquidi)-26))
+        else:
+            self.__logo(ws)
 
     def prezzi_14(self):
         """
         Crea la quattordicesima pagina.
-        Strumenti di Intesa San Paolo e Mediolanum
+        Strumenti di Crédit Agricole, Mediobanca e Mediolanum
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
-
-        # 14.Prezzi 3
-        ws = self.wb.create_sheet('14.prezzi_3')
-        ws = self.wb['14.prezzi_3']
+        # Crea foglio
+        ws = self.wb.create_sheet('14.prezzi')
+        ws = self.wb['14.prezzi']
         self.wb.active = ws
-
-        ws['A1'] = 'Intesa San Paolo'
-        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws.merge_cells('A1:L4')
-
-        # Creazione tabella
-        header_14 = ['Nome', '', '', '', '', 'Valuta', 'Quantità', 'Prezzo di carico', 'Prezzo attuale', '∆ prezzo', 'Ctv', '']
-        for column in ws.iter_cols(min_col=1, max_col=12, min_row=6, max_row=6):
-            ws[column[0].coordinate].value = header_14[0]
-            del header_14[0]
-            ws[column[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF', bold=True)
-            ws[column[0].coordinate].alignment = Alignment(horizontal='center', vertical='center')
-            ws[column[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-
-        ws.merge_cells('A6:E7')
-        ws.merge_cells('F6:F7')
-        ws.merge_cells('G6:G7')
-        ws.merge_cells('H6:H7')
-        ws['H6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('I6:I7')
-        ws['I6'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells('J6:J7')
-        ws.merge_cells('K6:L7')
-
-        ubi_strumenti_liquidi = portfolio[(portfolio['INTERMEDIARIO']=='Intesa San Paolo') & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
-        ubi_proddoti = ubi_strumenti_liquidi.PRODOTTO
-        ubi_proddoti = list(ubi_proddoti)
-        for row in ws.iter_rows(min_row=8, max_row=ubi_strumenti_liquidi.shape[0] + 8 -1, min_col=1, max_col=12):
-            ws[row[0].coordinate].value = ubi_proddoti[0]
-            del ubi_proddoti[0]
-            ws[row[0].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].value = (ubi_strumenti_liquidi.loc[ubi_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
-            ws[row[5].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[6].coordinate].value = (ubi_strumenti_liquidi.loc[ubi_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
-            ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (ubi_strumenti_liquidi.loc[ubi_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
-            ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[8].coordinate].value = (ubi_strumenti_liquidi.loc[ubi_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
-            ws[row[8].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[8].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[9].coordinate].value = (ws[row[8].coordinate].value / ws[row[7].coordinate].value) - 1
-            ws[row[9].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[9].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[9].coordinate].number_format = FORMAT_PERCENTAGE_00
-            ws[row[10].coordinate].value = (ubi_strumenti_liquidi.loc[ubi_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
-            ws[row[10].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[10].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[10].coordinate].number_format = '€ #,##0.00'
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[0].column, end_column=row[4].column)
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[10].column, end_column=row[11].column)
-
-        # Creazione tabella
-        #print(ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + 8 + 1, column=1).coordinate)
-        mediolanum_strumenti_liquidi = portfolio[(portfolio['INTERMEDIARIO']=='Mediolanum') & (portfolio['CATEGORIA']!='CASH') & (portfolio['CATEGORIA']!='CASH_FOREIGN_CURR')]
-        jpm_proddoti = mediolanum_strumenti_liquidi.PRODOTTO
-        jpm_proddoti = list(jpm_proddoti)
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 1, column=1,  value='Mediolanum')
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 1, column=1).alignment = Alignment(horizontal='center', vertical='center')
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 1, column=1).font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 1, column=1).fill = PatternFill(fill_type='solid', fgColor='31869B')
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 1, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 4, start_column=1, end_column=12)
-        #print(mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 2 - 1)
-
-        header_14 = ['Nome', '', '', '', '', 'Valuta', 'Quantità', 'Prezzo di carico', 'Prezzo attuale', '∆ prezzo', 'Ctv', '']
-        for column in ws.iter_cols(min_col=1, max_col=12, min_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, max_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6):
-            ws[column[0].coordinate].value = header_14[0]
-            del header_14[0]
-            ws[column[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF', bold=True)
-            ws[column[0].coordinate].alignment = Alignment(horizontal='center', vertical='center')
-            ws[column[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=1, end_column=5)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=6, end_column=6)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=7, end_column=7)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=8, end_column=8)
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, column=8).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=9, end_column=9)
-        ws.cell(row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, column=9).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=10, end_column=10)
-        ws.merge_cells(start_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 6, end_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 7, start_column=11, end_column=12)
-        
-        for row in ws.iter_rows(min_row=ubi_strumenti_liquidi.shape[0] + 8 + 9, max_row=mediolanum_strumenti_liquidi.shape[0] + ubi_strumenti_liquidi.shape[0] + 8 + 9 - 1, min_col=1, max_col=12):
-            ws[row[0].coordinate].value = jpm_proddoti[0]
-            del jpm_proddoti[0]
-            ws[row[0].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].value = (mediolanum_strumenti_liquidi.loc[mediolanum_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'DIVISA']).values[0]
-            ws[row[5].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[5].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[6].coordinate].value = (mediolanum_strumenti_liquidi.loc[mediolanum_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
-            ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (mediolanum_strumenti_liquidi.loc[mediolanum_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
-            ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[8].coordinate].value = (mediolanum_strumenti_liquidi.loc[mediolanum_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
-            ws[row[8].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[8].coordinate].number_format = FORMAT_NUMBER_00
-            ws[row[9].coordinate].value = (ws[row[8].coordinate].value / ws[row[7].coordinate].value) - 1
-            ws[row[9].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[9].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[9].coordinate].number_format = FORMAT_PERCENTAGE_00
-            ws[row[10].coordinate].value = (mediolanum_strumenti_liquidi.loc[mediolanum_strumenti_liquidi['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1']).values[0]
-            ws[row[10].coordinate].font = Font(name='Times New Roman', size=10)
-            ws[row[10].coordinate].alignment = Alignment(horizontal='center')
-            ws[row[10].coordinate].number_format = '€ #,##0.00'
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[0].column, end_column=row[4].column)
-            ws.merge_cells(start_row=row[0].row, end_row=row[0].row, start_column=row[10].column, end_column=row[11].column)
-
-        self.__logo(ws)
+        min_row = 1
+        # Crea tabella Crédit Agricole
+        credit_agricole_strumenti_liquidi = portfolio[
+            ((portfolio['INTERMEDIARIO']=='Crédit Agricole Artes') | 
+             (portfolio['INTERMEDIARIO']=='Crédit Agricole B.N.')) &
+               (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Crédit Agricole', credit_agricole_strumenti_liquidi)
+        # Crea tabella Mediobanca
+        mediobanca_strumenti_liquidi = portfolio[
+            (portfolio['INTERMEDIARIO']=='Mediobanca') &
+              (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Mediobanca', mediobanca_strumenti_liquidi)
+        # Crea tabella Mediolanum
+        mediolanum_strumenti_liquidi = portfolio[
+            (portfolio['INTERMEDIARIO']=='Mediolanum') &
+              (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
+        min_row = self.tabella_prezzi(ws, min_row, 'Mediolanum', mediolanum_strumenti_liquidi)
+        # Logo
+        if len(credit_agricole_strumenti_liquidi+mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi) > 26:
+            self.__logo(
+                ws, row=35+(len(credit_agricole_strumenti_liquidi+mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi)-26)
+                )
+        else:
+            self.__logo(ws)
 
     def att_in_corso_15(self):
         """
@@ -1352,8 +1188,8 @@ class Report():
         """
         Crea la sedicesima pagina.
         """
-        ws = self.wb.create_sheet('16.val_per_macro')
-        ws = self.wb['16.val_per_macro']
+        ws = self.wb.create_sheet('16.vpm')
+        ws = self.wb['16.vpm']
         self.wb.active = ws
 
         ws['A11'] = '3. Valutazione Per Macroclasse'
@@ -1625,7 +1461,7 @@ class Report():
                 ws[row[_].coordinate].border = Border(bottom=Side(border_style='thin', color='31869B'), right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'), top=Side(border_style='thin', color='31869B'))
                 ws[row[_].coordinate].number_format = '#,0'
 
-    def azioni_19(self):
+    def tabella_pivot_azioni(self):
         """
         Crea la tabella pivot delle azioni.
         """
@@ -1642,7 +1478,6 @@ class Report():
         banks = ptf_equity['INTERMEDIARIO'].unique()
         count_banks = banks.size
         dict_equity = ptf_equity.to_dict('list')
-        print(dict_equity)
         
         # Creazione tabella #
         
@@ -1701,10 +1536,9 @@ class Report():
         min_row += 2
 
         # Corpo
-        # azioni = [azione for azione in ptf_equity.iterrows()]
         count_equity = len(dict_equity['PRODOTTO'])
         columns_length = []
-        for row in ws.iter_rows(min_row=min_row, max_row=min_row + count_equity -1, min_col=min_col, max_col=min_col + len(header)):
+        for row in ws.iter_rows(min_row=min_row, max_row=min_row + count_equity - 1, min_col=min_col, max_col=min_col + len(header)):
             # nome strumento
             ws[row[0].coordinate].value = dict_equity['PRODOTTO'][row[0].row-min_row]
             ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
@@ -1716,16 +1550,25 @@ class Report():
             )
             # controvalore strumento aggiunto per riga
             for _ in range(1, count_banks+1):
-                if portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum() != 0:
-                    ws[row[_].coordinate].value = portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum()
+                row_offset = -2-(row[0].row-min_row)
+                ctv_t1 = ptf_equity.loc[
+                    (ptf_equity['INTERMEDIARIO']==ws[row[_].offset(column=0, row=row_offset).coordinate].value) &
+                    (ptf_equity['PRODOTTO']==ws[row[0].coordinate].value),
+                    'TOTALE t1'
+                ]
+                if not ctv_t1.empty:
+                    ws[row[_].coordinate].value = ctv_t1.values[0]
                 else:
                     ws[row[_].coordinate].value = ''
                 ws[row[_].coordinate].alignment = Alignment(horizontal='center')
                 ws[row[_].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[_].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
+                ws[row[_].coordinate].border = Border(
+                    bottom=Side(border_style='dashed', color='31869B'),
+                    right=Side(border_style='dashed', color='31869B'),
+                    left=Side(border_style='dashed', color='31869B')
+                )
                 ws[row[_].coordinate].number_format = '#,0'
             # totale t1
-            # ws[row[count_banks+1].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1'].sum()
             ws[row[count_banks+1].coordinate].value = dict_equity['TOTALE t1'][row[0].row-min_row]
             ws[row[count_banks+1].coordinate].alignment = Alignment(horizontal='center')
             ws[row[count_banks+1].coordinate].font = Font(name='Times New Roman', size=9)
@@ -1736,7 +1579,6 @@ class Report():
             )
             ws[row[count_banks+1].coordinate].number_format = '#,0'
             # totale t0
-            # ws[row[count_banks+2].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t0'].sum()
             ws[row[count_banks+2].coordinate].value = dict_equity['TOTALE t0'][row[0].row-min_row]
             ws[row[count_banks+2].coordinate].alignment = Alignment(horizontal='center')
             ws[row[count_banks+2].coordinate].font = Font(name='Times New Roman', size=9)
@@ -1746,21 +1588,9 @@ class Report():
                 left=Side(border_style='dashed', color='31869B')
             )
             ws[row[count_banks+2].coordinate].number_format = '#,0'
-            # Calcolo del delta mensile dei prezzi degli strumenti in euro,
+            # calcolo del delta mensile dei prezzi degli strumenti in euro,
             # tranne quando il prodotto è stato liquidato in t1 o non esisteva in t0
             if ws[row[count_banks+1].coordinate].value != 0 and ws[row[count_banks+2].coordinate].value != 0:
-                # ws[row[count_banks+3].coordinate].value = (
-                #     ws[row[count_banks+1].coordinate].value -  ws[row[count_banks+2].coordinate].value
-                # ) / ws[row[count_banks+2].coordinate].value
-
-                # ws[row[count_banks+3].coordinate].value = (
-                #     (
-                #         (azioni[row[0].row-min_row][1]['PREZZO t1'] * azioni[row[0].row-min_row][1]['CAMBIO t1'])
-                #         - (azioni[row[0].row-min_row][1]['PREZZO t0'] * azioni[row[0].row-min_row][1]['CAMBIO t0'])
-                #     )
-                #     /
-                #     (azioni[row[0].row-min_row][1]['PREZZO t0'] * azioni[row[0].row-min_row][1]['CAMBIO t0'])
-                # )
                 ws[row[count_banks+3].coordinate].value = (
                     (
                         (dict_equity['PREZZO t1'][row[0].row-min_row] * dict_equity['CAMBIO t1'][row[0].row-min_row])
@@ -1773,14 +1603,18 @@ class Report():
                 ws[row[count_banks+3].coordinate].value = '/'
             ws[row[count_banks+3].coordinate].alignment = Alignment(horizontal='center')
             ws[row[count_banks+3].coordinate].font = Font(name='Times New Roman', size=9)
-            ws[row[count_banks+3].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
+            ws[row[count_banks+3].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
             ws[row[count_banks+3].coordinate].number_format = FORMAT_PERCENTAGE_00
 
             columns_length.append(len(ws.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
             ws.column_dimensions[row[0].column_letter].width = max(columns_length) + 2.5 # modifica larghezza colonna
 
         # Somma per intermediari
-        for row in ws.iter_rows(min_row=10 + count_equity, max_row=10 + count_equity, min_col=min_col, max_col=min_col + len(header)):
+        for row in ws.iter_rows(min_row=min_row + count_equity, max_row=min_row + count_equity, min_col=min_col, max_col=min_col + len(header)):
             ws[row[0].coordinate].value = 'TOTALE'
             ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
             ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, bold=True)
@@ -1798,13 +1632,6 @@ class Report():
             ws[row[len(header)-3].coordinate].value = ptf_equity['TOTALE t1'].sum()
             ws[row[len(header)-2].coordinate].value = ptf_equity['TOTALE t0'].sum()
             # delta mensile complessivo
-            # TODO: anche in questo caso è il delta dei controvalori in euro calcolati come rapporto tra controvalori in euro
-            # degli strumenti che hanno un controvalore in t0 e in t1
-            # ws[row[len(header)-1].coordinate].value = (
-            #     portfolio.loc[(portfolio['CATEGORIA']=='EQUITY') & (portfolio['TOTALE t0']!=0), 'TOTALE t1'].sum() \
-            #     -
-            #     portfolio.loc[(portfolio['CATEGORIA']=='EQUITY') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()
-            #     ) / portfolio.loc[(portfolio['CATEGORIA']=='EQUITY') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()
             ptf_equity_not_null = ptf_equity.loc[(ptf_equity['TOTALE t1']!=0) & (ptf_equity['TOTALE t0']!=0)]
             ws[row[len(header)-1].coordinate].value = (
                 # somma dei controvalori t1 ottenuti con quantità vecchie
@@ -1837,135 +1664,195 @@ class Report():
                 ws[row[_].coordinate].number_format = '#,0'
             ws[row[len(header)-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
-    def obb_governative_20(self):
+    def tabella_pivot_obbligazioni_governative(self):
         """
-        Crea la ventesima pagina.
+        Crea la tabella pivot delle azioni.
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
 
-        # 20.Obb. governative
         ws = self.wb.create_sheet('20.obb_gov')
         ws = self.wb['20.obb_gov']
         self.wb.active = ws
 
-        # Creazione tabella
+        # Inizializza variabili
+        min_row = 1
+        ptf_gov_bond = portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND']
+        banks = ptf_gov_bond['INTERMEDIARIO'].unique()
+        count_banks = banks.size
+        dict_gov_bond = ptf_gov_bond.to_dict('list')
+
+        # Creazione tabella #
+        
+        # Colonne
+        header = banks.tolist()
+        header.insert(0, '')
+        header.extend(('Totale '+ self.mesi_dict[self.t1.month], 'Totale '+ self.mesi_dict[self.t0_1m.month], 'Delta'))
+
+        # Creazione tabella # TODO da togliere
         header_20 = list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())
         header_20.insert(0, '')
         header_20.extend(('Totale '+ self.mesi_dict[self.t1.month], 'Totale '+ self.mesi_dict[self.t0_1m.month], 'Delta'))
         len_header_20 = len(header_20)
 
-        # TODO:prima crea la tabella, poi alla fine, calcola la lunghezza dell'header, aggiungi colonne davanti o dietro per centrare la tabella, e infine inserisci il titolo in alto
         ws['A1'] = 'Obbligazioni Governative'
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
         ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        if len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 1:
-            lunghezza_titolo_20 = 12
-            min_col = 4
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 2:
-            lunghezza_titolo_20 = 12
-            min_col = 4
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 3:
-            lunghezza_titolo_20 = 12
-            min_col = 3
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 4:
-            lunghezza_titolo_20 = 12
-            min_col = 3
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 5:
-            lunghezza_titolo_20 = 12
-            min_col = 2
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 6:
-            lunghezza_titolo_20 = 12
-            min_col = 2
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 7:
-            lunghezza_titolo_20 = 12
-            min_col = 1
-        else:
-            lunghezza_titolo_20 = len_header_20
-            min_col = 1
-        # elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 5:
-        #     lunghezza_titolo_20 = 9
-        # elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 4:
-        #     lunghezza_titolo_20 = 9
-        #     header_20.insert(len(header_20), '')
-        # elif len(list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','INTERMEDIARIO'].unique())) == 3:
-        #     lunghezza_titolo_20 = 9
-        #     header_20.insert(len(header_20), '')
-        #     header_20.insert(0, '')
-        # len_header_20 = len(header_20)
-        # lunghezza_titolo_20 = len(ws.cell(row=1, column=1).value)
-        # print(lunghezza_titolo_20)
-        ws.merge_cells(start_row=1, end_row=4, start_column=1, end_column=lunghezza_titolo_20)
+        match count_banks:
+            case 1:
+                lunghezza_titolo = 12
+                min_col = 4
+            case 2:
+                lunghezza_titolo = 12
+                min_col = 4
+            case 3:
+                lunghezza_titolo = 12
+                min_col = 3
+            case 4:
+                lunghezza_titolo = 12
+                min_col = 3
+            case 5:
+                lunghezza_titolo = 12
+                min_col = 2
+            case 6:
+                lunghezza_titolo = 12
+                min_col = 2
+            case 7:
+                lunghezza_titolo = 12
+                min_col = 1
+            case _:
+                lunghezza_titolo = len(header)
+                min_col = 1
+        ws.merge_cells(start_row=1, end_row=4, start_column=1, end_column=lunghezza_titolo)
+        min_row += 7
 
         # Intestazione
-        for col in ws.iter_cols(min_row=8, max_row=9, min_col=min_col, max_col=min_col + len_header_20 - 1):
-            ws[col[0].coordinate].value = header_20[0]
-            del header_20[0]
+        for col in ws.iter_cols(min_row=min_row, max_row=min_row + 1, min_col=min_col, max_col=min_col + len(header) - 1):
+            ws[col[0].coordinate].value = header[col[0].column-min_col]
             ws[col[0].coordinate].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
             ws[col[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF')
             ws[col[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-            ws[col[0].coordinate].border = Border(right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'))
+            ws[col[0].coordinate].border = Border(
+                right=Side(border_style='thin', color='31869B'),
+                left=Side(border_style='thin', color='31869B')
+            )
             ws.merge_cells(start_row=col[0].row, end_row=col[1].row, start_column=col[0].column, end_column=col[0].column)
             ws.row_dimensions[col[0].row].height = 20
             ws.row_dimensions[col[1].row].height = 20
             ws.column_dimensions[col[0].column_letter].width = 12
+        min_row += 2
 
-        # Indice e riempimento tabella
+        # Corpo
+        count_gov_bond = len(dict_gov_bond['PRODOTTO'])
+        columns_length = []
         nome_obbgov = list(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND','PRODOTTO'])
         len_nome_obbgov = len(nome_obbgov)
         num_intermediari = len(portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND', 'INTERMEDIARIO'].unique())
-        lunghezza_colonna_20 = []
-        for row in ws.iter_rows(min_row=8, max_row=10 + len_nome_obbgov -1, min_col=min_col, max_col=min_col + len_header_20):
-            if row[0].row > 9:
-                ws[row[0].coordinate].value = nome_obbgov[0] 
-                del nome_obbgov[0]
-                ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
-                ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, color='000000')
-                ws[row[0].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                for _ in range(1, num_intermediari+1):
-                    ws[row[_].coordinate].value = portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum() if portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum() != 0 else ''
-                    ws[row[_].coordinate].alignment = Alignment(horizontal='center')
-                    ws[row[_].coordinate].font = Font(name='Times New Roman', size=9)
-                    ws[row[_].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                    ws[row[_].coordinate].number_format = '#,0'
+        for row in ws.iter_rows(min_row=min_row, max_row=min_row + count_gov_bond - 1, min_col=min_col, max_col=min_col + len(header)):
+            # nome strumento
+            ws[row[0].coordinate].value = dict_gov_bond['PRODOTTO'][row[0].row-min_row]
+            ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
+            ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, color='000000')
+            ws[row[0].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            # controvalore strumento aggiunto per riga
+            for _ in range(1, count_banks+1):
+                row_offset = -2-(row[0].row-min_row)
+                ctv_t1 = ptf_gov_bond.loc[
+                    (ptf_gov_bond['INTERMEDIARIO']==ws[row[_].offset(column=0, row=row_offset).coordinate].value) &
+                    (ptf_gov_bond['PRODOTTO']==ws[row[0].coordinate].value),
+                    'TOTALE t1'
+                ]
+                if not ctv_t1.empty:
+                    ws[row[_].coordinate].value = ctv_t1.values[0]
+                else:
+                    ws[row[_].coordinate].value = ''
+                ws[row[_].coordinate].alignment = Alignment(horizontal='center')
+                ws[row[_].coordinate].font = Font(name='Times New Roman', size=9)
+                ws[row[_].coordinate].border = Border(
+                    bottom=Side(border_style='dashed', color='31869B'),
+                    right=Side(border_style='dashed', color='31869B'),
+                    left=Side(border_style='dashed', color='31869B')
+                )
+                ws[row[_].coordinate].number_format = '#,0'
+            # totale t1
+            ws[row[count_banks+1].coordinate].value = dict_gov_bond['TOTALE t1'][row[0].row-min_row]
+            ws[row[count_banks+1].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+1].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+1].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+1].coordinate].number_format = '#,0'
+            # totale t0
+            ws[row[count_banks+2].coordinate].value = dict_gov_bond['TOTALE t0'][row[0].row-min_row]
+            ws[row[count_banks+2].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+2].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+2].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+2].coordinate].number_format = '#,0'
+            # calcolo del delta mensile dei prezzi degli strumenti in euro,
+            # tranne quando il prodotto è stato liquidato in t1 o non esisteva in t0
+            if ws[row[count_banks+1].coordinate].value != 0 and ws[row[count_banks+2].coordinate].value != 0:
+                ws[row[count_banks+3].coordinate].value = (
+                    (
+                        (dict_gov_bond['PREZZO t1'][row[0].row-min_row] * dict_gov_bond['CAMBIO t1'][row[0].row-min_row])
+                        - (dict_gov_bond['PREZZO t0'][row[0].row-min_row]* dict_gov_bond['CAMBIO t0'][row[0].row-min_row])
+                    )
+                    /
+                    (dict_gov_bond['PREZZO t0'][row[0].row-min_row] * dict_gov_bond['CAMBIO t0'][row[0].row-min_row])
+                )
+            else:
+                ws[row[count_banks+3].coordinate].value = '/'
+            ws[row[count_banks+3].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+3].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+3].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+3].coordinate].number_format = FORMAT_PERCENTAGE_00
 
-                ws[row[num_intermediari+1].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1'].sum()
-                ws[row[num_intermediari+1].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+1].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+1].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+1].coordinate].number_format = '#,0'
-                ws[row[num_intermediari+2].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t0'].sum()
-                ws[row[num_intermediari+2].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+2].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+2].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+2].coordinate].number_format = '#,0'
-                ws[row[num_intermediari+3].coordinate].value = (ws[row[num_intermediari+1].coordinate].value -  ws[row[num_intermediari+2].coordinate].value) / (ws[row[num_intermediari+2].coordinate].value) if ws[row[num_intermediari+2].coordinate].value != 0 and ws[row[num_intermediari+1].coordinate].value != 0 else '/'
-                ws[row[num_intermediari+3].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+3].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+3].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+3].coordinate].number_format = FORMAT_PERCENTAGE_00
-
-                lunghezza_colonna_20.append(len(ws.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
-                ws.column_dimensions[row[0].column_letter].width = max(lunghezza_colonna_20) + 2.5 # modifica larghezza colonna FALLO ALLA FINE
+            columns_length.append(len(ws.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
+            ws.column_dimensions[row[0].column_letter].width = max(columns_length) + 2.5 # modifica larghezza colonna FALLO ALLA FINE
 
         # Somma per intermediari
-        for row in ws.iter_rows(min_row=10 + len_nome_obbgov, max_row=10 + len_nome_obbgov, min_col=min_col, max_col=min_col + len_header_20):
+        for row in ws.iter_rows(min_row=min_row + count_gov_bond, max_row=min_row + count_gov_bond, min_col=min_col, max_col=min_col + len(header)):
             ws[row[0].coordinate].value = 'TOTALE'
             ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
             ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, bold=True)
-            ws[row[0].coordinate].border = Border(bottom=Side(border_style='thin', color='31869B'), right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'), top=Side(border_style='thin', color='31869B'))
-            for _ in range(1,len_header_20-2):
+            ws[row[0].coordinate].border = Border(
+                bottom=Side(border_style='thin', color='31869B'),
+                right=Side(border_style='thin', color='31869B'),
+                left=Side(border_style='thin', color='31869B'),
+                top=Side(border_style='thin', color='31869B')
+            )
+            for _ in range(1, len(header)-3):
+                # TODO: da qui!
                 ws[row[_].coordinate].value = portfolio.loc[(portfolio['INTERMEDIARIO']==ws.cell(row=row[_].row, column=row[_].column).offset(row=-len_nome_obbgov-2).value) & (portfolio['CATEGORIA']=='GOVERNMENT_BOND'), 'TOTALE t1'].sum()
             ws[row[len_header_20-3].coordinate].value = portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND', 'TOTALE t1'].sum()
             ws[row[len_header_20-2].coordinate].value = portfolio.loc[portfolio['CATEGORIA']=='GOVERNMENT_BOND', 'TOTALE t0'].sum()
             ws[row[len_header_20-1].coordinate].value = (portfolio.loc[(portfolio['CATEGORIA']=='GOVERNMENT_BOND') & (portfolio['TOTALE t0']!=0), 'TOTALE t1'].sum() - portfolio.loc[(portfolio['CATEGORIA']=='GOVERNMENT_BOND') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()) / portfolio.loc[(portfolio['CATEGORIA']=='GOVERNMENT_BOND') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()
-            for _ in range(1,len_header_20):
+            
+            for _ in range(1, len(header)):
                 ws[row[_].coordinate].alignment = Alignment(horizontal='center')
                 ws[row[_].coordinate].font = Font(name='Times New Roman', size=9, bold=True)
-                ws[row[_].coordinate].border = Border(bottom=Side(border_style='thin', color='31869B'), right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'), top=Side(border_style='thin', color='31869B'))
+                ws[row[_].coordinate].border = Border(
+                    bottom=Side(border_style='thin', color='31869B'),
+                    right=Side(border_style='thin', color='31869B'),
+                    left=Side(border_style='thin', color='31869B'),
+                    top=Side(border_style='thin', color='31869B')
+                )
                 ws[row[_].coordinate].number_format = '#,0'
-            ws[row[len_header_20-1].coordinate].number_format = FORMAT_PERCENTAGE_00
+            ws[row[len(header)-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def obb_corporate_21(self):
         """
@@ -2688,7 +2575,15 @@ class Report():
             ws.row_dimensions[col[1].row].height = 20
             ws.column_dimensions[col[0].column_letter].width = 12
 
-        tipo_strumento_nogp = list(portfolio.loc[portfolio['CATEGORIA']!='GP', 'CATEGORIA'].unique())
+        # tipo_strumento_nogp = list(portfolio.loc[portfolio['CATEGORIA']!='GP', 'CATEGORIA'].unique())
+        # Con la rimozione dell'hedge fund da JPM, non esistono più prodotti di quel tipo, se non all'interno
+        # delle gestioni patrimoniali. Con la riga di codice sopra, non vengono intercettati
+        # Chiedi al professor Maspero di poter togliere dall'asset allocation gli hedge fund.
+        # Devo specificarli tutti a mano
+        tipo_strumento_nogp = [
+            'CASH', 'EQUITY', 'CASH_FOREIGN_CURR', 'CORPORATE_BOND', 'GOVERNMENT_BOND', 
+            'ALTERNATIVE_ASSET', 'HEDGE_FUND'
+        ]
         len_tipo_strumento_nogp = len(tipo_strumento_nogp)
         num_intermediari = len(portfolio['INTERMEDIARIO'].unique())
         lunghezza_colonna_27 = []
@@ -2763,6 +2658,13 @@ class Report():
             p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=1200, b=True)),
             endParaRPr=CharacterProperties(sz=1200, b=True))])
         chart.legend.layout = Layout(manualLayout=ManualLayout(h=1))
+        palette = ['540b0e', 'ff595e', 'ffca3a', '8ac926', '1982c4', 'f15bb5', '6a4c93']
+        series = chart.series[0]
+        for point in range(len_tipo_strumento_nogp):
+            pt = DataPoint(idx=point)
+            pt.graphicalProperties.solidFill = palette[point]
+            series.dPt.append(pt)
+
         ws.add_chart(chart, 'D20')
 
     def contatti_28(self):
@@ -2834,8 +2736,7 @@ class Report():
 
 if __name__ == "__main__":
     start = time.time()
-    # TODO : riduci la costante SFASAMENTO_DATI (riga 786 di un'unità)
-    _ = Report(t1='31/12/2022')
+    _ = Report(t1='30/04/2024') #TODO: commenta la riga 947 e forse la 946
     _.copertina_1()
     _.indice_2()
     _.analisi_di_mercato_3()
@@ -2855,8 +2756,8 @@ if __name__ == "__main__":
     _.valutazione_per_macroclasse_16()
     _.sintesi_17()
     _.valuta_18()
-    _.azioni_19()
-    _.obb_governative_20()
+    _.tabella_pivot_azioni()
+    _.tabella_pivot_obbligazioni_governative()
     _.obb_corporate_21()
     _.obb_totale_22()
     _.liquidità_23()
