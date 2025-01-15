@@ -935,12 +935,13 @@ class Report():
         # Indice
         intermediari = portfolio.loc[:, 'INTERMEDIARIO'].unique()
         intermediari = list(intermediari)
-        intermediari.remove('Altro')
         intermediari.insert(len(intermediari), 'Interessi Phoenix')
         intermediari.insert(len(intermediari), 'Totale Complessivo')
-        # # Elimina per questo mese le due posizioni sotto
-        intermediari.remove('Banca Patrimoni Nespoli')
-        intermediari.remove('Banca Valsabbina')
+        # Rimuovi gli intermediari per cui non calcolo la performance
+        intermediari.remove('Banca Valsabbina Nespoli')
+        intermediari.remove('Crédit Agricole Artes')
+        intermediari.remove('Crédit Agricole B.N.')
+        intermediari.remove('Altro')
         len_int = len(intermediari)
         # Corpo tabella
         for row in ws.iter_rows(min_col=min_col, max_col=min_col+len_header_11-1, min_row=min_row+1, max_row=min_row+1+len_int-1):
@@ -1057,7 +1058,7 @@ class Report():
             ws[row[6].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'QUANTITA t1']).values[0]
             ws[row[6].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[6].coordinate].number_format = '#,##0.00'
-            ws[row[7].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'Prezzo_di_carico']).values[0]
+            ws[row[7].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'prezzo_di_carico']).values[0]
             ws[row[7].coordinate].font = Font(name='Times New Roman', size=10)
             ws[row[7].coordinate].number_format = FORMAT_NUMBER_00
             ws[row[8].coordinate].value = (strumenti.loc[strumenti['PRODOTTO']==ws[row[0].coordinate].value, 'PREZZO t1']).values[0]
@@ -1079,7 +1080,7 @@ class Report():
     def prezzi_12(self):
         """
         Crea la dodicesima pagina.
-        Strumenti di Banca Patrimoni e Banca Valsabbina
+        Strumenti di Banca Patrimoni e Banca Valsabbina Artes
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1097,7 +1098,7 @@ class Report():
         min_row = self.tabella_prezzi(ws, min_row, 'Banca Patrimoni', banca_patrimoni_strumenti_liquidi)
         # Crea tabella Banca Valsabbina
         banca_valsabbina_strumenti_liquidi = portfolio[
-            (portfolio['INTERMEDIARIO']=='Banca Valsabbina') &
+            (portfolio['INTERMEDIARIO']=='Banca Valsabbina Artes') &
               (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
         min_row = self.tabella_prezzi(ws, min_row, 'Banca Valsabbina', banca_valsabbina_strumenti_liquidi)
         # Logo
@@ -1132,7 +1133,7 @@ class Report():
     def prezzi_14(self):
         """
         Crea la quattordicesima pagina.
-        Strumenti di Crédit Agricole, Mediobanca e Mediolanum
+        Strumenti di Mediobanca e Mediolanum
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1141,12 +1142,6 @@ class Report():
         ws = self.wb['14.prezzi']
         self.wb.active = ws
         min_row = 1
-        # Crea tabella Crédit Agricole
-        credit_agricole_strumenti_liquidi = portfolio[
-            ((portfolio['INTERMEDIARIO']=='Crédit Agricole Artes') | 
-             (portfolio['INTERMEDIARIO']=='Crédit Agricole B.N.')) &
-               (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
-        min_row = self.tabella_prezzi(ws, min_row, 'Crédit Agricole', credit_agricole_strumenti_liquidi)
         # Crea tabella Mediobanca
         mediobanca_strumenti_liquidi = portfolio[
             (portfolio['INTERMEDIARIO']=='Mediobanca') &
@@ -1158,9 +1153,9 @@ class Report():
               (~portfolio['CATEGORIA'].isin(['CASH', 'CASH_FOREIGN_CURR', 'ALTERNATIVE_ASSET', 'GP']))]
         min_row = self.tabella_prezzi(ws, min_row, 'Mediolanum', mediolanum_strumenti_liquidi)
         # Logo
-        if len(credit_agricole_strumenti_liquidi+mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi) > 26:
+        if len(mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi) > 26:
             self.__logo(
-                ws, row=35+(len(credit_agricole_strumenti_liquidi+mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi)-26)
+                ws, row=35+(len(mediobanca_strumenti_liquidi+mediolanum_strumenti_liquidi)-26)
                 )
         else:
             self.__logo(ws)
@@ -1633,6 +1628,7 @@ class Report():
             ws[row[len(header)-2].coordinate].value = ptf_equity['TOTALE t0'].sum()
             # delta mensile complessivo
             ptf_equity_not_null = ptf_equity.loc[(ptf_equity['TOTALE t1']!=0) & (ptf_equity['TOTALE t0']!=0)]
+
             ws[row[len(header)-1].coordinate].value = (
                 # somma dei controvalori t1 ottenuti con quantità vecchie
                 (
@@ -1666,7 +1662,7 @@ class Report():
 
     def tabella_pivot_obbligazioni_governative(self):
         """
-        Crea la tabella pivot delle azioni.
+        Crea la tabella pivot delle obbligazioni governative.
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1854,9 +1850,9 @@ class Report():
                 ws[row[_].coordinate].number_format = '#,0'
             ws[row[len(header)-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
-    def obb_corporate_21(self):
+    def tabella_pivot_obbligazioni_societarie(self):
         """
-        Crea la ventunesima pagina.
+        Crea la tabella pivot delle obbligazioni societarie.
         """
         # Carica portafoglio
         portfolio = pd.read_excel(self.file_portafoglio, sheet_name='Portfolio', header=1)
@@ -1865,111 +1861,184 @@ class Report():
         ws = self.wb['21.obb_cor']
         self.wb.active = ws
 
-        # Creazione tabella
+        # Inizializza variabili
+        min_row = 1
+        ptf_corp_bond = portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND']
+        banks = ptf_corp_bond['INTERMEDIARIO'].unique()
+        count_banks = banks.size
+        dict_corp_bond = ptf_corp_bond.to_dict('list')
+
+        # Creazione tabella #
+        
+        # Colonne
+        header = banks.tolist()
+        header.insert(0, '')
+        header.extend(('Totale '+ self.mesi_dict[self.t1.month], 'Totale '+ self.mesi_dict[self.t0_1m.month], 'Delta'))
+
+        # Creazione tabella # TODO da togliere
         header_21 = list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())
         header_21.insert(0, '')
         header_21.extend(('Totale '+ self.mesi_dict[self.t1.month], 'Totale '+ self.mesi_dict[self.t0_1m.month], 'Delta'))
         len_header_21 = len(header_21)
 
-        # Titolo
         ws['A1'] = 'Obbligazioni Corporate'
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws['A1'].font = Font(name='Times New Roman', size=48, bold=True, color='FFFFFF')
         ws['A1'].fill = PatternFill(fill_type='solid', fgColor='31869B')
-        if len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 1:
-            lunghezza_titolo_21 = 12
-            min_col = 4
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 2:
-            lunghezza_titolo_21 = 12
-            min_col = 4
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 3:
-            lunghezza_titolo_21 = 12
-            min_col = 3
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 4:
-            lunghezza_titolo_21 = 12
-            min_col = 3
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 5:
-            lunghezza_titolo_21 = 12
-            min_col = 2
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 6:
-            lunghezza_titolo_21 = 12
-            min_col = 2
-        elif len(list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','INTERMEDIARIO'].unique())) == 7:
-            lunghezza_titolo_21 = 12
-            min_col = 1
-        else:
-            lunghezza_titolo_21 = len_header_21
-            min_col = 1
-        ws.merge_cells(start_row=1, end_row=4, start_column=1, end_column=lunghezza_titolo_21)
+        match count_banks:
+            case 1:
+                lunghezza_titolo = 12
+                min_col = 4
+            case 2:
+                lunghezza_titolo = 12
+                min_col = 4
+            case 3:
+                lunghezza_titolo = 12
+                min_col = 3
+            case 4:
+                lunghezza_titolo = 12
+                min_col = 3
+            case 5:
+                lunghezza_titolo = 12
+                min_col = 2
+            case 6:
+                lunghezza_titolo = 12
+                min_col = 2
+            case 7:
+                lunghezza_titolo = 12
+                min_col = 1
+            case _:
+                lunghezza_titolo = len(header)
+                min_col = 1
+        ws.merge_cells(start_row=1, end_row=4, start_column=1, end_column=lunghezza_titolo)
+        min_row += 7
 
         # Intestazione
-        for col in ws.iter_cols(min_row=8, max_row=9, min_col=min_col, max_col=min_col + len_header_21 - 1):
-            ws[col[0].coordinate].value = header_21[0]
-            del header_21[0]
+        for col in ws.iter_cols(min_row=min_row, max_row=min_row + 1, min_col=min_col, max_col=min_col + len(header) - 1):
+            ws[col[0].coordinate].value = header[col[0].column-min_col]
             ws[col[0].coordinate].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
             ws[col[0].coordinate].font = Font(name='Times New Roman', size=10, color='FFFFFF')
             ws[col[0].coordinate].fill = PatternFill(fill_type='solid', fgColor='31869B')
-            ws[col[0].coordinate].border = Border(right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'))
+            ws[col[0].coordinate].border = Border(
+                right=Side(border_style='thin', color='31869B'),
+                left=Side(border_style='thin', color='31869B')
+            )
             ws.merge_cells(start_row=col[0].row, end_row=col[1].row, start_column=col[0].column, end_column=col[0].column)
             ws.row_dimensions[col[0].row].height = 20
             ws.row_dimensions[col[1].row].height = 20
             ws.column_dimensions[col[0].column_letter].width = 12
+        min_row += 2
 
-        # Indice e riempimento tabella
+        # Corpo
+        count_corp_bond = len(dict_corp_bond['PRODOTTO'])
+        columns_length = []
         nome_obbcorp = list(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND','PRODOTTO'])
         len_nome_obbcorp = len(nome_obbcorp)
         num_intermediari = len(portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND', 'INTERMEDIARIO'].unique())
-        lunghezza_colonna_21 = []
-        for row in ws.iter_rows(min_row=8, max_row=10 + len_nome_obbcorp -1, min_col=min_col, max_col=min_col + len_header_21):
-            if row[0].row > 9:
-                ws[row[0].coordinate].value = nome_obbcorp[0] 
-                del nome_obbcorp[0]
-                ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
-                ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, color='000000')
-                ws[row[0].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                for _ in range(1, num_intermediari+1):
-                    ws[row[_].coordinate].value = portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum() if portfolio.loc[(portfolio['INTERMEDIARIO']==ws[row[_].offset(column=0, row=-2-(row[0].row-10)).coordinate].value) & (portfolio['PRODOTTO']==ws[row[0].coordinate].value), 'TOTALE t1'].sum() != 0 else ''
-                    ws[row[_].coordinate].alignment = Alignment(horizontal='center')
-                    ws[row[_].coordinate].font = Font(name='Times New Roman', size=9)
-                    ws[row[_].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                    ws[row[_].coordinate].number_format = '#,0'
+        for row in ws.iter_rows(min_row=min_row, max_row=min_row + count_corp_bond - 1, min_col=min_col, max_col=min_col + len(header)):
+            # nome strumento
+            ws[row[0].coordinate].value = dict_corp_bond['PRODOTTO'][row[0].row-min_row]
+            ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
+            ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, color='000000')
+            ws[row[0].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            # controvalore strumento aggiunto per riga
+            for _ in range(1, count_banks+1):
+                row_offset = -2-(row[0].row-min_row)
+                ctv_t1 = ptf_corp_bond.loc[
+                    (ptf_corp_bond['INTERMEDIARIO']==ws[row[_].offset(column=0, row=row_offset).coordinate].value) &
+                    (ptf_corp_bond['PRODOTTO']==ws[row[0].coordinate].value),
+                    'TOTALE t1'
+                ]
+                if not ctv_t1.empty:
+                    ws[row[_].coordinate].value = ctv_t1.values[0]
+                else:
+                    ws[row[_].coordinate].value = ''
+                ws[row[_].coordinate].alignment = Alignment(horizontal='center')
+                ws[row[_].coordinate].font = Font(name='Times New Roman', size=9)
+                ws[row[_].coordinate].border = Border(
+                    bottom=Side(border_style='dashed', color='31869B'),
+                    right=Side(border_style='dashed', color='31869B'),
+                    left=Side(border_style='dashed', color='31869B')
+                )
+                ws[row[_].coordinate].number_format = '#,0'
+            # totale t1
+            ws[row[count_banks+1].coordinate].value = dict_corp_bond['TOTALE t1'][row[0].row-min_row]
+            ws[row[count_banks+1].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+1].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+1].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+1].coordinate].number_format = '#,0'
+            # totale t0
+            ws[row[count_banks+2].coordinate].value = dict_corp_bond['TOTALE t0'][row[0].row-min_row]
+            ws[row[count_banks+2].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+2].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+2].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+2].coordinate].number_format = '#,0'
+            # calcolo del delta mensile dei prezzi degli strumenti in euro,
+            # tranne quando il prodotto è stato liquidato in t1 o non esisteva in t0
+            if ws[row[count_banks+1].coordinate].value != 0 and ws[row[count_banks+2].coordinate].value != 0:
+                ws[row[count_banks+3].coordinate].value = (
+                    (
+                        (dict_corp_bond['PREZZO t1'][row[0].row-min_row] * dict_corp_bond['CAMBIO t1'][row[0].row-min_row])
+                        - (dict_corp_bond['PREZZO t0'][row[0].row-min_row]* dict_corp_bond['CAMBIO t0'][row[0].row-min_row])
+                    )
+                    /
+                    (dict_corp_bond['PREZZO t0'][row[0].row-min_row] * dict_corp_bond['CAMBIO t0'][row[0].row-min_row])
+                )
+            else:
+                ws[row[count_banks+3].coordinate].value = '/'
+            ws[row[count_banks+3].coordinate].alignment = Alignment(horizontal='center')
+            ws[row[count_banks+3].coordinate].font = Font(name='Times New Roman', size=9)
+            ws[row[count_banks+3].coordinate].border = Border(
+                bottom=Side(border_style='dashed', color='31869B'),
+                right=Side(border_style='dashed', color='31869B'),
+                left=Side(border_style='dashed', color='31869B')
+            )
+            ws[row[count_banks+3].coordinate].number_format = FORMAT_PERCENTAGE_00
 
-                ws[row[num_intermediari+1].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t1'].sum()
-                ws[row[num_intermediari+1].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+1].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+1].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+1].coordinate].number_format = '#,0'
-                ws[row[num_intermediari+2].coordinate].value = portfolio.loc[portfolio['PRODOTTO']==ws[row[0].coordinate].value, 'TOTALE t0'].sum()
-                ws[row[num_intermediari+2].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+2].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+2].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+2].coordinate].number_format = '#,0'
-                ws[row[num_intermediari+3].coordinate].value = (ws[row[num_intermediari+1].coordinate].value -  ws[row[num_intermediari+2].coordinate].value) / (ws[row[num_intermediari+2].coordinate].value) if ws[row[num_intermediari+2].coordinate].value != 0 and ws[row[num_intermediari+1].coordinate].value != 0 else '/'
-                ws[row[num_intermediari+3].coordinate].alignment = Alignment(horizontal='center')
-                ws[row[num_intermediari+3].coordinate].font = Font(name='Times New Roman', size=9)
-                ws[row[num_intermediari+3].coordinate].border = Border(bottom=Side(border_style='dashed', color='31869B'), right=Side(border_style='dashed', color='31869B'), left=Side(border_style='dashed', color='31869B'))
-                ws[row[num_intermediari+3].coordinate].number_format = FORMAT_PERCENTAGE_00
-
-                lunghezza_colonna_21.append(len(ws.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
-                ws.column_dimensions[row[0].column_letter].width = max(lunghezza_colonna_21) + 2.5 # modifica larghezza colonna FALLO ALLA FINE
+            columns_length.append(len(ws.cell(row=row[0].row, column=row[0].column).value)) # ottieni la lunghezza della colonna
+            ws.column_dimensions[row[0].column_letter].width = max(columns_length) + 2.5 # modifica larghezza colonna FALLO ALLA FINE
 
         # Somma per intermediari
-        for row in ws.iter_rows(min_row=10 + len_nome_obbcorp, max_row=10 + len_nome_obbcorp, min_col=min_col, max_col=min_col + len_header_21):
+        for row in ws.iter_rows(min_row=min_row + count_corp_bond, max_row=min_row + count_corp_bond, min_col=min_col, max_col=min_col + len(header)):
             ws[row[0].coordinate].value = 'TOTALE'
             ws[row[0].coordinate].alignment = Alignment(horizontal='left', vertical='center')
             ws[row[0].coordinate].font = Font(name='Times New Roman', size=9, bold=True)
-            ws[row[0].coordinate].border = Border(bottom=Side(border_style='thin', color='31869B'), right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'), top=Side(border_style='thin', color='31869B'))
-            for _ in range(1,len_header_21-2):
+            ws[row[0].coordinate].border = Border(
+                bottom=Side(border_style='thin', color='31869B'),
+                right=Side(border_style='thin', color='31869B'),
+                left=Side(border_style='thin', color='31869B'),
+                top=Side(border_style='thin', color='31869B')
+            )
+            for _ in range(1, len(header)-3):
+                # TODO: da qui!
                 ws[row[_].coordinate].value = portfolio.loc[(portfolio['INTERMEDIARIO']==ws.cell(row=row[_].row, column=row[_].column).offset(row=-len_nome_obbcorp-2).value) & (portfolio['CATEGORIA']=='CORPORATE_BOND'), 'TOTALE t1'].sum()
             ws[row[len_header_21-3].coordinate].value = portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND', 'TOTALE t1'].sum()
             ws[row[len_header_21-2].coordinate].value = portfolio.loc[portfolio['CATEGORIA']=='CORPORATE_BOND', 'TOTALE t0'].sum()
             ws[row[len_header_21-1].coordinate].value = (portfolio.loc[(portfolio['CATEGORIA']=='CORPORATE_BOND') & (portfolio['TOTALE t0']!=0), 'TOTALE t1'].sum() - portfolio.loc[(portfolio['CATEGORIA']=='CORPORATE_BOND') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()) / portfolio.loc[(portfolio['CATEGORIA']=='CORPORATE_BOND') & (portfolio['TOTALE t1']!=0), 'TOTALE t0'].sum()
-            for _ in range(1,len_header_21):
+            
+            for _ in range(1, len(header)):
                 ws[row[_].coordinate].alignment = Alignment(horizontal='center')
                 ws[row[_].coordinate].font = Font(name='Times New Roman', size=9, bold=True)
-                ws[row[_].coordinate].border = Border(bottom=Side(border_style='thin', color='31869B'), right=Side(border_style='thin', color='31869B'), left=Side(border_style='thin', color='31869B'), top=Side(border_style='thin', color='31869B'))
+                ws[row[_].coordinate].border = Border(
+                    bottom=Side(border_style='thin', color='31869B'),
+                    right=Side(border_style='thin', color='31869B'),
+                    left=Side(border_style='thin', color='31869B'),
+                    top=Side(border_style='thin', color='31869B')
+                )
                 ws[row[_].coordinate].number_format = '#,0'
-            ws[row[len_header_21-1].coordinate].number_format = FORMAT_PERCENTAGE_00
+            ws[row[len(header)-1].coordinate].number_format = FORMAT_PERCENTAGE_00
 
     def obb_totale_22(self):
         """
@@ -2735,8 +2804,8 @@ class Report():
 
 
 if __name__ == "__main__":
-    start = time.time()
-    _ = Report(t1='30/04/2024') #TODO: commenta la riga 947 e forse la 946
+    start = time.time() # TODO: sostituisci tutte le chiamate al foglio Portfolio con Portfolio (2)
+    _ = Report(t1='31/12/2024')
     _.copertina_1()
     _.indice_2()
     _.analisi_di_mercato_3()
@@ -2758,7 +2827,7 @@ if __name__ == "__main__":
     _.valuta_18()
     _.tabella_pivot_azioni()
     _.tabella_pivot_obbligazioni_governative()
-    _.obb_corporate_21()
+    _.tabella_pivot_obbligazioni_societarie()
     _.obb_totale_22()
     _.liquidità_23()
     _.liq_totale_24()
